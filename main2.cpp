@@ -2,9 +2,41 @@
 #include<vector>
 #include<fstream>
 #include<string>
-
+#include <graphics.h>
+#include <conio.h>
+#define CELL_SIZE 100 
+#define BOARD_SIZE 8
 using namespace std;
 
+// graffic functions
+void drawBoard() {
+    int i, j;
+    for (i = 0; i < BOARD_SIZE; i++) {
+        for (j = 0; j < BOARD_SIZE; j++) {
+            rectangle(i * CELL_SIZE, j * CELL_SIZE, (i + 1) * CELL_SIZE, (j + 1) * CELL_SIZE);
+        }
+    }
+}
+void placePiece(int x, int y, int color) {
+    int centerX = x * CELL_SIZE + CELL_SIZE / 2;
+    int centerY = y * CELL_SIZE + CELL_SIZE / 2;
+    setfillstyle(SOLID_FILL, color);
+    fillellipse(centerX, centerY, CELL_SIZE / 2 - 10, CELL_SIZE / 2 - 10);
+}
+void setBoard(){
+	int i,j;
+	placePiece(3,3,WHITE);
+	placePiece(4,4,WHITE);
+	placePiece(4,3,BLACK);
+	placePiece(3,4,BLACK);
+}
+void highlightCell(int x, int y, int color) {
+    setcolor(color);
+    rectangle(x * CELL_SIZE + 1, y * CELL_SIZE + 1, x * CELL_SIZE + CELL_SIZE - 1, y * CELL_SIZE + CELL_SIZE - 1);
+    setcolor(WHITE);
+}
+
+//classes
 class User{
 protected:
 	int ID;
@@ -107,8 +139,6 @@ public:
 		BestScore=score;
 	}
 };	
-
-
 class Admin : public User{
 private:
 	void setData(){
@@ -119,12 +149,6 @@ private:
 public:
 	Admin(){
 		setData();
-	}
-	string getUsername(){
-		return this->UserName;
-	}
-	string getPass(){
-		return this->Password;
 	}
 };
 
@@ -142,7 +166,6 @@ string getPassword(){
 	cin >> password;
 	return password;
 }
-
 vector<User> fillUsers(vector<User> a){
 	string line,user,pass;
 	int id,score;
@@ -174,13 +197,12 @@ void fillFile(vector<User> a){
 	}
 	users.close();
 }
-
 void showVec(vector <User> b){
 	int i;
 	User temp;
 	for(i=0;i<b.size();i++){
 		temp=b[i];
-		cout << temp.getID() << temp.getUsername() << temp.getPass() << temp.getScore() << endl;
+		cout << temp.getID() << " " << temp.getUsername() << " " << temp.getPass() << " " << temp.getScore() << endl;
 	}
 }
 
@@ -190,6 +212,16 @@ int main(){
 	string user;
 	vector <User> list;
 	list= fillUsers(list);
+	int Q[9][9];
+	for(i=0;i<9;i++){
+		for(j=0;j<9;j++){
+			Q[i][j]=0;
+		}
+	}
+    int gd = DETECT, gm;
+    int x = 0, y = 0;
+    int prevX = -1, prevY = -1;
+    
 	while(true){
 	cout << "welcome to the othello game!\n" << "Menu:\n" << "1- add player\n" << "2- enter game\n" << "3- review last game\n" << "4- best scores\n" << "5- exit\n";
 	cout << "enter option: ";
@@ -208,12 +240,15 @@ int main(){
 			Admin a;
 			list.clear();
 			list= fillUsers(list);
-			if(getUsername()==a.getUsername()){
+			string user;
+			string user1=getUsername();
+			if(user1==a.getUsername()){
 				if(getPassword()==a.getPass()){
 					//admin panel
 					cout << "Welcome Admin!" << endl << "choose option: " << endl << "1- delete user" << endl;
 					cin >> numb;
 					if(numb==1){
+						//delete user
 						cout << "you are deleting a user!";
 						user=getUsername();
 						int isValid=0;
@@ -231,12 +266,108 @@ int main(){
 						if(!isValid){
 							cout << "username does not exist!";
 						}
-						break;
+						continue;
 					}
 				}
 			}
+			
 			else{
-				
+				for(i=0;i<list.size();i++){
+					User temp1=list[i];
+					if(user1==temp1.getUsername()){
+						if(getPassword()==temp1.getPass()){
+							// user panel
+							cout << "welcome user (" << temp1.getUsername() << ")" << endl << "1- single player\n2- two players\nchoose option: ";
+							cin >> numb;
+							if(numb==1){
+								//bot game
+							}
+							if(numb==2){
+								//2 player game
+								string user2=getUsername();
+								for(i=0;i<list.size();i++){
+									User temp2=list[i];
+									if(user2==temp2.getUsername()){
+										if(temp2.getPass()==getPassword()){
+											cout << "second player confirmed!\n" << "player 1: " << temp1.getUsername() << endl << "player 2: " << temp2.getUsername();
+											cout << "\npress 1 to start the game...\n";
+											int start;
+											cin >> start;
+											fflush(stdin);
+											if(start==1){
+											cout << "the game starts... ";		
+										    initwindow(BOARD_SIZE * CELL_SIZE, BOARD_SIZE * CELL_SIZE);
+										    drawBoard();
+										    setBoard();
+											highlightCell(x, y, YELLOW);	
+																	
+										    while (true) {
+										        if (kbhit()) {
+										            char ch = getch();
+										            if (ch == 0)
+										                ch = getch();
+										            switch (ch) {
+										                case 77:
+										                    if (x < BOARD_SIZE - 1) {
+										                        prevX = x;
+										                        prevY = y;
+										                        x++;
+										                    }
+										                    break;
+										                case 75:
+										                    if (x > 0) {
+										                        prevX = x;
+										                        prevY = y;
+										                        x--;
+										                    }
+										                    break;
+										                case 72:
+										                    if (y > 0) {
+										                        prevX = x;
+										                        prevY = y;
+										                        y--;
+										                    }
+										                    break;
+										                case 80:
+										                    if (y < BOARD_SIZE - 1) {
+										                        prevX = x;
+										                        prevY = y;
+										                        y++;
+										                    }
+										                    break;
+										                case 'w':
+										                case 'W':
+										                    placePiece(x, y, WHITE);
+										                    Q[x][y]=1;
+										                    
+										                    break;
+										                case 'b':
+										                case 'B':
+										                    placePiece(x, y, BLACK);
+										                    Q[x][y]=-1;
+										                    break;
+										                case 27:
+										                    closegraph();
+										                    return 0;
+										            }
+										            if (prevX != -1) {
+										                highlightCell(prevX, prevY, BLACK);
+										                drawBoard();
+										            }
+										            highlightCell(x, y, YELLOW);  
+										        }
+										    }
+										            getch();
+   													 closegraph();
+												
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	
