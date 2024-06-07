@@ -8,34 +8,6 @@
 #define BOARD_SIZE 8
 using namespace std;
 
-// graffic functions
-void drawBoard() {
-    int i, j;
-    for (i = 0; i < BOARD_SIZE; i++) {
-        for (j = 0; j < BOARD_SIZE; j++) {
-            rectangle(i * CELL_SIZE, j * CELL_SIZE, (i + 1) * CELL_SIZE, (j + 1) * CELL_SIZE);
-        }
-    }
-}
-void placePiece(int x, int y, int color) {
-    int centerX = x * CELL_SIZE + CELL_SIZE / 2;
-    int centerY = y * CELL_SIZE + CELL_SIZE / 2;
-    setfillstyle(SOLID_FILL, color);
-    fillellipse(centerX, centerY, CELL_SIZE / 2 - 10, CELL_SIZE / 2 - 10);
-}
-void setBoard(){
-	int i,j;
-	placePiece(3,3,WHITE);
-	placePiece(4,4,WHITE);
-	placePiece(4,3,BLACK);
-	placePiece(3,4,BLACK);
-}
-void highlightCell(int x, int y, int color) {
-    setcolor(color);
-    rectangle(x * CELL_SIZE + 1, y * CELL_SIZE + 1, x * CELL_SIZE + CELL_SIZE - 1, y * CELL_SIZE + CELL_SIZE - 1);
-    setcolor(WHITE);
-}
-
 //classes
 class User{
 protected:
@@ -151,9 +123,144 @@ public:
 		setData();
 	}
 };
+class Game{
+public:
+	
+	void placePiece(int x, int y, int color) {
+	    int centerX = x * CELL_SIZE + CELL_SIZE / 2;
+	    int centerY = y * CELL_SIZE + CELL_SIZE / 2;
+	    setfillstyle(SOLID_FILL, color);
+	    fillellipse(centerX, centerY, CELL_SIZE / 2 - 10, CELL_SIZE / 2 - 10);
+	}
+	int flipLine(int x,int y,int color, int q[9][9]){
+		int i,countB=0,countA=0,index=-1;
+		for(i=x-1;i>=0;i--){
+			if(q[i][y]==0){
+				break;
+			}
+			if(q[x][y]==q[i][y]){
+				index=i;
+				break;
+			}
+		}
+		if(index!=-1){
+			for(i=index+1;i<x;i++){
+				countB++;
+				if(color==1){
+					q[i][y]=1;
+					placePiece(i,y,WHITE);
+				}
+				if(color==-1){
+					q[i][y]=-1;
+					placePiece(i,y,BLACK);
+				}
+			}		
+		}
+		index=-1;
+		for(i=x+1;i<8;i++){
+			if(q[i][y]==0){
+				break;
+			}
+			if(q[x][y]==q[i][y]){
+				index=i;
+				break;
+			}
+		}
+		if(index!=-1){
+			for(i=x+1;i<index;i++){
+				countA++;
+				if(color==1){
+					q[i][y]=1;
+					placePiece(i,y,WHITE);
+				}
+				if(color==-1){
+					q[i][y]=-1;
+					placePiece(i,y,BLACK);
+				}
+			}		
+		}
+		return countA+countB;
+	}
+	int flipColumn(int x,int y,int color, int q[9][9]){
+		int i,j,countB=0,countA=0,index=-1;
+		for(j=y-1;j>=0;j--){
+			if(q[x][j]==0){
+				break;
+			}
+			if(q[x][y]==q[x][j]){
+				index=j;
+				break;
+			}
+		}
+		if(index!=-1){
+			for(j=index+1;j<y;j++){
+				countB++;
+				if(color==1){
+					q[x][j]=1;
+					placePiece(x,j,WHITE);
+				}
+				if(color==-1){
+					q[x][j]=-1;
+					placePiece(x,j,BLACK);
+				}
+			}		
+		}
+		index=-1;
+		for(j=y+1;j<8;j++){
+			if(q[x][j]==0){
+				break;
+			}
+			if(q[x][y]==q[x][j]){
+				index=j;
+				break;
+			}
+		}
+		if(index!=-1){
+			for(j=y+1;j<index;j++){
+				countA++;
+				if(color==1){
+					q[x][j]=1;
+					placePiece(x,j,WHITE);
+				}
+				if(color==-1){
+					q[x][j]=-1;
+					placePiece(x,j,BLACK);
+				}
+			}		
+		}
+		return countA+countB;
+	}
 
+};
 
 //functions
+	void drawBoard() {
+		int i, j;
+		for (i = 0; i < BOARD_SIZE; i++) {
+		    for (j = 0; j < BOARD_SIZE; j++) {
+		        rectangle(i * CELL_SIZE, j * CELL_SIZE, (i + 1) * CELL_SIZE, (j + 1) * CELL_SIZE);
+	        }
+	    }
+	}
+	void placePiece(int x, int y, int color) {
+	    int centerX = x * CELL_SIZE + CELL_SIZE / 2;
+	    int centerY = y * CELL_SIZE + CELL_SIZE / 2;
+	    setfillstyle(SOLID_FILL, color);
+	    fillellipse(centerX, centerY, CELL_SIZE / 2 - 10, CELL_SIZE / 2 - 10);
+	}
+	void setBoard(){
+		int i,j;
+		placePiece(3,3,WHITE);
+		placePiece(4,4,WHITE);
+		placePiece(4,3,BLACK);
+		placePiece(3,4,BLACK);
+	}
+	void highlightCell(int x, int y, int color) {
+	    setcolor(color);
+	    rectangle(x * CELL_SIZE + 1, y * CELL_SIZE + 1, x * CELL_SIZE + CELL_SIZE - 1, y * CELL_SIZE + CELL_SIZE - 1);
+	    setcolor(WHITE);
+	}
+
 string getUsername(){
 	string username;
 	cout << "enter username: ";
@@ -205,10 +312,55 @@ void showVec(vector <User> b){
 		cout << temp.getID() << " " << temp.getUsername() << " " << temp.getPass() << " " << temp.getScore() << endl;
 	}
 }
+void flipLine(int x,int y,int color, int q[9][9]){
+	int i,countB=0,countA=0,index=-1;
+	for(i=x-1;i>=0;i--){
+		if(q[i][y]==0){
+			break;
+		}
+		if(q[x][y]==q[i][y]){
+			index=i;
+		}
+	}
+	if(index!=-1){
+		for(i=index+1;i<x;i++){
+			if(color==1){
+				q[i][y]=1;
+				placePiece(i,y,WHITE);
+			}
+			if(color==-1){
+				q[i][y]=-1;
+				placePiece(i,y,BLACK);
+			}
+		}		
+	}
+	index=-1;
+	for(i=x+1;i<8;i++){
+		if(q[i][y]==0){
+			break;
+		}
+		if(q[x][y]==q[i][y]){
+			index=i;
+		}
+	}
+	if(index!=-1){
+		for(i=x+1;i<index;i++){
+			if(color==1){
+				q[i][y]=1;
+				placePiece(i,y,WHITE);
+			}
+			if(color==-1){
+				q[i][y]=-1;
+				placePiece(i,y,BLACK);
+			}
+		}		
+	}
+}
+
 
 int main(){
 	User w;
-	int num,i,j,numb;
+	int num,i,j,numb,t;
 	string user;
 	vector <User> list;
 	list= fillUsers(list);
@@ -218,6 +370,10 @@ int main(){
 			Q[i][j]=0;
 		}
 	}
+	Q[3][3]=1;
+	Q[4][4]=1;
+	Q[3][4]=-1;
+	Q[4][3]=-1;
     int gd = DETECT, gm;
     int x = 0, y = 0;
     int prevX = -1, prevY = -1;
@@ -283,7 +439,8 @@ int main(){
 								//bot game
 							}
 							if(numb==2){
-								//2 player game
+								//2 player game	
+								Game play;
 								string user2=getUsername();
 								for(i=0;i<list.size();i++){
 									User temp2=list[i];
@@ -295,7 +452,7 @@ int main(){
 											cin >> start;
 											fflush(stdin);
 											if(start==1){
-											cout << "the game starts... ";		
+											cout << "the game starts... ";	
 										    initwindow(BOARD_SIZE * CELL_SIZE, BOARD_SIZE * CELL_SIZE);
 										    drawBoard();
 										    setBoard();
@@ -337,14 +494,32 @@ int main(){
 										                    break;
 										                case 'w':
 										                case 'W':
-										                    placePiece(x, y, WHITE);
+										                    play.placePiece(x, y, WHITE);
 										                    Q[x][y]=1;
+										                    t+=play.flipLine(x,y,1,Q);
+										                    t+=play.flipColumn(x,y,1,Q);
+										                    for(j=0;j<8;j++){
+										                    	for(i=0;i<8;i++){
+										                    		cout << Q[i][j];
+																}
+																cout << endl;
+															}
+																cout << "********" << endl;
 										                    
 										                    break;
 										                case 'b':
 										                case 'B':
-										                    placePiece(x, y, BLACK);
+										                    play.placePiece(x, y, BLACK);
 										                    Q[x][y]=-1;
+										                    t+=play.flipLine(x,y,-1,Q);
+										                    t+=play.flipColumn(x,y,-1,Q);
+										                    for(j=0;j<8;j++){
+										                    	for(i=0;i<8;i++){
+										                    		cout << Q[i][j];
+																}
+																cout << endl;
+															}
+																cout << "********" << endl;
 										                    break;
 										                case 27:
 										                    closegraph();
