@@ -125,12 +125,32 @@ public:
 };
 class Game{
 public:
+	Game(){
+	initwindow(BOARD_SIZE * CELL_SIZE, BOARD_SIZE * CELL_SIZE);
+	drawBoard();
+	setBoard();
+	}
 	
 	void placePiece(int x, int y, int color) {
 	    int centerX = x * CELL_SIZE + CELL_SIZE / 2;
 	    int centerY = y * CELL_SIZE + CELL_SIZE / 2;
 	    setfillstyle(SOLID_FILL, color);
 	    fillellipse(centerX, centerY, CELL_SIZE / 2 - 10, CELL_SIZE / 2 - 10);
+	}
+	void drawBoard() {
+		int i, j;
+		for (i = 0; i < BOARD_SIZE; i++) {
+		    for (j = 0; j < BOARD_SIZE; j++) {
+		        rectangle(i * CELL_SIZE, j * CELL_SIZE, (i + 1) * CELL_SIZE, (j + 1) * CELL_SIZE);
+	        }
+	    }
+	}
+	void setBoard(){
+		int i,j;
+		placePiece(3,3,WHITE);
+		placePiece(4,4,WHITE);
+		placePiece(4,3,BLACK);
+		placePiece(3,4,BLACK);
 	}
 	int flipLine(int x,int y,int color, int q[9][9]){
 		int i,countB=0,countA=0,index=-1;
@@ -230,31 +250,109 @@ public:
 		}
 		return countA+countB;
 	}
+	int flipDiameter(int x,int y,int color,int q[9][9]){
+		int i,j,countB=0,countA=0,countBB=0,countAA=0,index=-1;
+		for(i=1;i<8;i++){
+			if(x+i>=8 || y-i<0 || q[x+i][y-i]==0){
+				break;
+			}
+			if(q[x][y]==q[x+i][y-i]){
+				index=i;
+				break;
+			}
+		}
+		if(index!=-1){
+			for(i=1;i<index;i++){
+					countB++;
+					if(color==1){
+						q[x+i][y-i]=1;
+						placePiece(x+i,y-i,WHITE);
+					}
+					if(color==-1){
+						q[i+x][y-i]=-1;
+						placePiece(x+i,y-i,BLACK);
+					}	
+			}
+		}
+		index=-1;
+
+		for(i=1;i<8;i++){
+			if(x-i<0 || y+i>8 || q[x-i][y+i]==0){
+				break;
+			}
+			if(q[x][y]==q[x-i][y+i]){
+				index=i;
+				break;
+			}
+		}
+		if(index!=-1){
+			for(i=1;i<index;i++){
+					countA++;
+					if(color==1){
+						q[x-i][y+i]=1;
+						placePiece(x-i,y+i,WHITE);
+					}
+					if(color==-1){
+						q[x-i][y+i]=-1;
+						placePiece(x-i,y+i,BLACK);
+					}	
+			}
+		}
+		
+		index=-1;
+
+		for(i=1;i<8;i++){
+			if(x-i<0 || y-i<0 || q[x-i][y-i]==0){
+				break;
+			}
+			if(q[x][y]==q[x-i][y-i]){
+				index=i;
+				break;
+			}
+		}
+		if(index!=-1){
+			for(i=1;i<index;i++){
+					countBB++;
+					if(color==1){
+						q[x-i][y-i]=1;
+						placePiece(x-i,y-i,WHITE);
+					}
+					if(color==-1){
+						q[x-i][y-i]=-1;
+						placePiece(x-i,y-i,BLACK);
+					}	
+			}
+		}
+		
+		index=-1;
+
+		for(i=1;i<8;i++){
+			if(x+i>=8 || y+i>=8 || q[x+i][y+i]==0){
+				break;
+			}
+			if(q[x][y]==q[x+i][y+i]){
+				index=i;
+				break;
+			}
+		}
+		if(index!=-1){
+			for(i=1;i<index;i++){
+					countAA++;
+					if(color==1){
+						q[x+i][y+i]=1;
+						placePiece(x+i,y+i,WHITE);
+					}
+					if(color==-1){
+						q[x+i][y+i]=-1;
+						placePiece(x+i,y+i,BLACK);
+					}	
+			}
+		}
+		return countA+countB;
+	}
+	
 
 };
-
-//functions
-	void drawBoard() {
-		int i, j;
-		for (i = 0; i < BOARD_SIZE; i++) {
-		    for (j = 0; j < BOARD_SIZE; j++) {
-		        rectangle(i * CELL_SIZE, j * CELL_SIZE, (i + 1) * CELL_SIZE, (j + 1) * CELL_SIZE);
-	        }
-	    }
-	}
-	void placePiece(int x, int y, int color) {
-	    int centerX = x * CELL_SIZE + CELL_SIZE / 2;
-	    int centerY = y * CELL_SIZE + CELL_SIZE / 2;
-	    setfillstyle(SOLID_FILL, color);
-	    fillellipse(centerX, centerY, CELL_SIZE / 2 - 10, CELL_SIZE / 2 - 10);
-	}
-	void setBoard(){
-		int i,j;
-		placePiece(3,3,WHITE);
-		placePiece(4,4,WHITE);
-		placePiece(4,3,BLACK);
-		placePiece(3,4,BLACK);
-	}
 	void highlightCell(int x, int y, int color) {
 	    setcolor(color);
 	    rectangle(x * CELL_SIZE + 1, y * CELL_SIZE + 1, x * CELL_SIZE + CELL_SIZE - 1, y * CELL_SIZE + CELL_SIZE - 1);
@@ -312,51 +410,16 @@ void showVec(vector <User> b){
 		cout << temp.getID() << " " << temp.getUsername() << " " << temp.getPass() << " " << temp.getScore() << endl;
 	}
 }
-void flipLine(int x,int y,int color, int q[9][9]){
-	int i,countB=0,countA=0,index=-1;
-	for(i=x-1;i>=0;i--){
-		if(q[i][y]==0){
-			break;
+void showGame(int q[9][9]){
+	int i,j;
+	for(j=0;j<8;j++){
+		for(i=0;i<8;i++){
+			cout << q[i][j];
 		}
-		if(q[x][y]==q[i][y]){
-			index=i;
-		}
+		cout << endl;
 	}
-	if(index!=-1){
-		for(i=index+1;i<x;i++){
-			if(color==1){
-				q[i][y]=1;
-				placePiece(i,y,WHITE);
-			}
-			if(color==-1){
-				q[i][y]=-1;
-				placePiece(i,y,BLACK);
-			}
-		}		
-	}
-	index=-1;
-	for(i=x+1;i<8;i++){
-		if(q[i][y]==0){
-			break;
-		}
-		if(q[x][y]==q[i][y]){
-			index=i;
-		}
-	}
-	if(index!=-1){
-		for(i=x+1;i<index;i++){
-			if(color==1){
-				q[i][y]=1;
-				placePiece(i,y,WHITE);
-			}
-			if(color==-1){
-				q[i][y]=-1;
-				placePiece(i,y,BLACK);
-			}
-		}		
-	}
+	cout << "********" << endl;
 }
-
 
 int main(){
 	User w;
@@ -440,7 +503,6 @@ int main(){
 							}
 							if(numb==2){
 								//2 player game	
-								Game play;
 								string user2=getUsername();
 								for(i=0;i<list.size();i++){
 									User temp2=list[i];
@@ -453,9 +515,7 @@ int main(){
 											fflush(stdin);
 											if(start==1){
 											cout << "the game starts... ";	
-										    initwindow(BOARD_SIZE * CELL_SIZE, BOARD_SIZE * CELL_SIZE);
-										    drawBoard();
-										    setBoard();
+											Game play;
 											highlightCell(x, y, YELLOW);	
 																	
 										    while (true) {
@@ -498,36 +558,25 @@ int main(){
 										                    Q[x][y]=1;
 										                    t+=play.flipLine(x,y,1,Q);
 										                    t+=play.flipColumn(x,y,1,Q);
-										                    for(j=0;j<8;j++){
-										                    	for(i=0;i<8;i++){
-										                    		cout << Q[i][j];
-																}
-																cout << endl;
-															}
-																cout << "********" << endl;
-										                    
+										                    t+=play.flipDiameter(x,y,1,Q);
 										                    break;
+										                    
 										                case 'b':
 										                case 'B':
 										                    play.placePiece(x, y, BLACK);
 										                    Q[x][y]=-1;
 										                    t+=play.flipLine(x,y,-1,Q);
 										                    t+=play.flipColumn(x,y,-1,Q);
-										                    for(j=0;j<8;j++){
-										                    	for(i=0;i<8;i++){
-										                    		cout << Q[i][j];
-																}
-																cout << endl;
-															}
-																cout << "********" << endl;
+										                    t+=play.flipDiameter(x,y,-1,Q);
 										                    break;
+										                    
 										                case 27:
 										                    closegraph();
 										                    return 0;
 										            }
 										            if (prevX != -1) {
 										                highlightCell(prevX, prevY, BLACK);
-										                drawBoard();
+										                play.drawBoard();
 										            }
 										            highlightCell(x, y, YELLOW);  
 										        }
