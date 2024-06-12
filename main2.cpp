@@ -140,7 +140,7 @@ public:
 		Turn=0;
 	}
 	int isTurn(){
-		return Turn;
+		return this->Turn;
 	}
 	void setColor(int colorNum){
 		Color=colorNum;
@@ -161,6 +161,10 @@ public:
 	Admin(){
 		setData();
 	}
+};
+
+class Bot : User{
+	
 };
 
 class Game{
@@ -239,6 +243,7 @@ public:
 				}
 			}		
 		}
+		cout << "line: " << countA << "\t" << countB;
 		return countA+countB;
 	}
 	int checkLine(int x,int y,int color, int q[9][9]){
@@ -321,6 +326,7 @@ public:
 				}
 			}		
 		}
+		cout << "column: " << countA << "\t" << countB;
 		return countA+countB;
 	}
 	int checkColumn(int x,int y,int color, int q[9][9]){
@@ -454,7 +460,8 @@ public:
 					}	
 			}
 		}
-		return countA+countB;
+		cout << "diam: " << countA+countB << "\t" << countAA+countBB << endl;
+		return countA+countB+countAA+countBB;
 	}
 	int checkDiameter(int x,int y,int color,int q[9][9]){
 		int i,j,countB=0,countA=0,countBB=0,countAA=0,index=-1;
@@ -534,28 +541,38 @@ public:
 		}
 	}
 	int passTurn(int q[9][9],int color){
-		int i,j,count=0;
+		int i,j,count=0,a,b,c;
+		
 		for(i=0;i<8;i++){
 			for(j=0;j<8;j++){
+				cout << q[i][j];
 				if(q[i][j]==0){
-					count+=checkLine(i,j,color,q);
-					count+=checkColumn(i,j,color,q);
-					count+=checkDiameter(i,j,color,q);
+					a=checkLine(i,j,color,q);
+					b=checkColumn(i,j,color,q);
+					c=checkDiameter(i,j,color,q);
+					count+=a;
+					count+=b;
+					count+=c;
 				}
 			}
 		}
-		if(count>0){
-			return 0;
+		cout << count;
+		if(count==0){
+			return 1;
 		}
-		return 1;
+		return 0;
 	}
 	User getWinner(User user1, User user2){
+		User draw;
 		if(user1.getLateScore()>user2.getLateScore()){
 			return user1;
 		}
 		else if(user2.getLateScore()>user1.getLateScore()){
 			return user2;
-		}	
+		}
+		else{
+			return draw;
+		}
 	}
 	int isBoardFull(int q[9][9]){
 		int r=0,i,j;
@@ -568,7 +585,83 @@ public:
 		}
 		return 1;
 	}
-
+	void updateHistory(int q[9][9],User user1,User user2){
+		int i,j;
+		fstream hist;
+		hist.open("history.txt", ios::out);
+		hist << user1.getUsername() << " : " << user1.getLateScore()<<endl;
+		hist << user2.getUsername() << " : " << user2.getLateScore()<< endl;
+		for(j=0;j<8;j++){
+			for(i=0;i<8;i++){
+				if(q[i][j]==1){
+					hist<< "W";
+				}
+				if(q[i][j]==-1){
+					hist<< "B";
+				}
+				if(q[i][j]==0){
+					hist << "0";
+				}
+			}
+			hist << endl;
+		}
+		hist.close();
+	}
+	void saveGame(int q[9][9],User user1,User user2){
+		int i,j;
+		fstream paused;
+		paused.open("paused.txt", ios::app);
+		paused << user1.getUsername() << user2.getUsername()<<endl;
+		for(j=0;j<8;j++){
+			for(i=0;i<8;i++){
+				if(q[i][j]==1){
+					paused<< "W ";
+				}
+				if(q[i][j]==-1){
+					paused<< "B ";
+				}
+				if(q[i][j]==0){
+					paused << "0 ";
+				}
+			}
+			paused << endl;
+		}
+		paused.close();
+	}
+	int checkPaused(User user1,User user2){
+		string first,sec,temp;
+		fstream paused;
+		paused.open("paused.txt", ios::in);
+		while(!paused.eof()){
+			paused >> first >>sec;
+			getline(paused,temp);
+			getline(paused,temp);
+			getline(paused,temp);
+			getline(paused,temp);
+			getline(paused,temp);
+			getline(paused,temp);
+			getline(paused,temp);
+			getline(paused,temp);
+			getline(paused,temp);
+			if((first==user1.getUsername() || sec==user1.getUsername()) && (first==user2.getUsername() || sec==user2.getUsername())){
+				return 1;
+			}
+		}
+		return 0;	
+	}
+//	void getLastBoard(int q[9][9], User temp1,User temp2){
+//		string first,sec,temp;
+//		fstream paused;
+//		paused.open("paused.txt", ios::in);
+//		while(!paused.eof()){
+//			paused >> first >>sec;
+//			getline(paused,temp);
+//			if((first==user1.getUsername() || sec==user1.getUsername()) && (first==user2.getUsername() || sec==user2.getUsername())){
+//				paused >> q[i][j] >> q[i][j+1] >> q[i][j+2] >> q[i][j+3]
+//			}	
+//			getline(paused,temp);
+//		}
+//	}	
 };
 	void highlightCell(int x, int y, int color) {
 	    setcolor(color);
@@ -727,6 +820,17 @@ int main(){
 									if(user2==temp2.getUsername()){
 										if(temp2.getPass()==getPassword()){
 											cout << "second player confirmed!\n" << "player 1: " << temp1.getUsername() << endl << "player 2: " << temp2.getUsername();
+//											if(checkPaused(temp1,temp2)){
+//												int gametype;
+//												cout<< "1- continue the last game\n" << "2- start new game\n" << "enter option: ";
+//												cin >> gametype;
+//												if(gametype==1){
+//													
+//												}
+//												if(gametype==2){
+//													
+//												}
+//											}
 											cout << "\nplayer 1 plays as BLACK\n";
 											cout << "player 2 plays as WHITE\n";
 											cout << "\npress 1 to start the game...\n";
@@ -764,7 +868,8 @@ int main(){
 													fillFile(list);
 													cout << "the winner is: " << play.getWinner(temp1,temp2).getUsername() << endl;
 													cout << "scores:\n" << temp1.getUsername() << ": " << temp1.getLateScore()<< endl;
-													cout << temp2.getUsername() << ": " << temp2.getLateScore() << endl;	
+													cout << temp2.getUsername() << ": " << temp2.getLateScore() << endl;
+													play.updateHistory(Q,temp1,temp2);	
 													cout << "press any key to go back to menu...";
 													getch();
 													closegraph();
@@ -810,57 +915,41 @@ int main(){
 												                    s1+=play.flipLine(x,y,-1,Q);
 												                    s1+=play.flipColumn(x,y,-1,Q);
 												                    s1+=play.flipDiameter(x,y,-1,Q);
-												                    temp1.resetTurn();
-												                    temp2.setTurn();
-	//											                    if(play.passTurn(Q,1)){
-	//											                    	temp2.resetTurn();
-	//											                   	    temp1.setTurn();
-	//																}
+//												                    if(play.passTurn(Q,1)==0){	
+																	
+													                    temp1.resetTurn();
+													                    temp2.setTurn();
+													                    continue;
+//																	}
+														
 																}
-																else if(temp2.isTurn()){
+																 if(temp2.isTurn()){
 																	play.placePiece(x, y, WHITE);
 												                    Q[x][y]=1;
 												                    s2+=play.flipLine(x,y,1,Q);
 												                    s2+=play.flipColumn(x,y,1,Q);
 												                    s2+=play.flipDiameter(x,y,1,Q);
+//												                    if(!play.passTurn(Q,-1)){
 												                    temp2.resetTurn();
 												                    temp1.setTurn();
-	//											                    if(play.passTurn(Q,-1)){
-	//										            			temp1.resetTurn();
-	//											                    temp2.setTurn();	
-	//																}
+												                    continue;
+//																	}													
 																}
 //																cout << "\nplayer 1 score: " << temp1.getLateScore();
 //																cout << "\nplayer 2 score: " << temp2.getLateScore();
-												                
-										            			
+						
 															}
 															break;
-														}
-										                    
-										                    
-										                case 'w':
-										                case 'W':
-										                    play.placePiece(x, y, WHITE);
-										                    Q[x][y]=1;
-										                    t+=play.flipLine(x,y,1,Q);
-										                    t+=play.flipColumn(x,y,1,Q);
-										                    t+=play.flipDiameter(x,y,1,Q);
-										                    break;
-										                    
-										                case 'b':
-										                case 'B':
-										                    play.placePiece(x, y, BLACK);
-										                    Q[x][y]=-1;
-										                    t+=play.flipLine(x,y,-1,Q);
-										                    t+=play.flipColumn(x,y,-1,Q);
-										                    t+=play.flipDiameter(x,y,-1,Q);
-										                    break;
-										                    
+														} 
+														
+														case 'p':
+															cout << "\nGAME PAUSED!\n";
+															temp1.updateScore(Q,-1);
+														    temp2.updateScore(Q,1);
+															break;
+															      
 										                case 27:
-										                    closegraph();
-										                    
-										                    
+										                    closegraph();        
 										            }
 										            
 										            if (prevX != -1) {
