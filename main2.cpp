@@ -170,9 +170,6 @@ class Bot : User{
 class Game{
 public:
 	Game(){
-	initwindow(BOARD_SIZE * CELL_SIZE, BOARD_SIZE * CELL_SIZE);
-	drawBoard();
-	setBoard();
 	}
 	
 	void placePiece(int x, int y, int color) {	
@@ -189,12 +186,21 @@ public:
 	        }
 	    }
 	}
-	void setBoard(){
+	void setBoard(int q[9][9]){
 		int i,j;
-		placePiece(3,3,WHITE);
-		placePiece(4,4,WHITE);
-		placePiece(4,3,BLACK);
-		placePiece(3,4,BLACK);
+		initwindow(BOARD_SIZE * CELL_SIZE, BOARD_SIZE * CELL_SIZE);
+		drawBoard();
+		for(i=0;i<8;i++){
+			for(j=0;j<8;j++){
+				if(q[i][j]==1){
+					placePiece(i,j,WHITE);
+				}
+				if(q[i][j]==-1){
+					placePiece(i,j,BLACK);
+				}
+			}
+		}
+		
 	}
 	int flipLine(int x,int y,int color, int q[9][9]){
 		int i,countB=0,countA=0,index=-1;
@@ -243,7 +249,6 @@ public:
 				}
 			}		
 		}
-		cout << "line: " << countA << "\t" << countB;
 		return countA+countB;
 	}
 	int checkLine(int x,int y,int color, int q[9][9]){
@@ -252,7 +257,7 @@ public:
 			if(q[i][y]==0){
 				break;
 			}
-			if(q[x][y]==q[i][y]){
+			if(color==q[i][y]){
 				index=i;
 				break;
 			}
@@ -267,7 +272,7 @@ public:
 			if(q[i][y]==0){
 				break;
 			}
-			if(q[x][y]==q[i][y]){
+			if(color==q[i][y]){
 				index=i;
 				break;
 			}
@@ -326,7 +331,6 @@ public:
 				}
 			}		
 		}
-		cout << "column: " << countA << "\t" << countB;
 		return countA+countB;
 	}
 	int checkColumn(int x,int y,int color, int q[9][9]){
@@ -335,7 +339,7 @@ public:
 			if(q[x][j]==0){
 				break;
 			}
-			if(q[x][y]==q[x][j]){
+			if(color==q[x][j]){
 				index=j;
 				break;
 			}
@@ -350,7 +354,7 @@ public:
 			if(q[x][j]==0){
 				break;
 			}
-			if(q[x][y]==q[x][j]){
+			if(color==q[x][j]){
 				index=j;
 				break;
 			}
@@ -460,7 +464,6 @@ public:
 					}	
 			}
 		}
-		cout << "diam: " << countA+countB << "\t" << countAA+countBB << endl;
 		return countA+countB+countAA+countBB;
 	}
 	int checkDiameter(int x,int y,int color,int q[9][9]){
@@ -469,7 +472,7 @@ public:
 			if(x+i>=8 || y-i<0 || q[x+i][y-i]==0){
 				break;
 			}
-			if(q[x][y]==q[x+i][y-i]){
+			if(color==q[x+i][y-i]){
 				index=i;
 				break;
 			}
@@ -485,7 +488,7 @@ public:
 			if(x-i<0 || y+i>8 || q[x-i][y+i]==0){
 				break;
 			}
-			if(q[x][y]==q[x-i][y+i]){
+			if(color==q[x-i][y+i]){
 				index=i;
 				break;
 			}
@@ -502,7 +505,7 @@ public:
 			if(x-i<0 || y-i<0 || q[x-i][y-i]==0){
 				break;
 			}
-			if(q[x][y]==q[x-i][y-i]){
+			if(color==q[x-i][y-i]){
 				index=i;
 				break;
 			}
@@ -519,7 +522,7 @@ public:
 			if(x+i>=8 || y+i>=8 || q[x+i][y+i]==0){
 				break;
 			}
-			if(q[x][y]==q[x+i][y+i]){
+			if(color==q[x+i][y+i]){
 				index=i;
 				break;
 			}
@@ -540,12 +543,18 @@ public:
 			return b;
 		}
 	}
+	int isMoveValid(int x,int y,int color, int q[9][9]){
+		int count=0;
+		count+=checkLine(x,y,color,q);
+		count+=checkColumn(x,y,color,q);
+		count+=checkDiameter(x,y,color,q);
+		return count;
+	}
 	int passTurn(int q[9][9],int color){
-		int i,j,count=0,a,b,c;
 		
+		int i,j,count=0,a,b,c;
 		for(i=0;i<8;i++){
 			for(j=0;j<8;j++){
-				cout << q[i][j];
 				if(q[i][j]==0){
 					a=checkLine(i,j,color,q);
 					b=checkColumn(i,j,color,q);
@@ -553,10 +562,11 @@ public:
 					count+=a;
 					count+=b;
 					count+=c;
+					//cout << a << b << c;
 				}
 			}
 		}
-		cout << count;
+//		cout << count;
 		if(count==0){
 			return 1;
 		}
@@ -585,12 +595,19 @@ public:
 		}
 		return 1;
 	}
-	void updateHistory(int q[9][9],User user1,User user2){
+	void updateHistory(int q[9][9],User user1,User user2,int gamestatus){
 		int i,j;
 		fstream hist;
-		hist.open("history.txt", ios::out);
-		hist << user1.getUsername() << " : " << user1.getLateScore()<<endl;
-		hist << user2.getUsername() << " : " << user2.getLateScore()<< endl;
+		hist.open("history.txt", ios::app);
+		hist << endl;
+		hist << user1.getUsername() << " " << user1.getLateScore()<<endl;
+		hist << user2.getUsername() << " " << user2.getLateScore()<< endl;
+		if(gamestatus==1){
+		hist << "status: finished" << endl; 	
+		}
+		if(gamestatus==0){
+			hist << "status: paused" << endl;
+		}
 		for(j=0;j<8;j++){
 			for(i=0;i<8;i++){
 				if(q[i][j]==1){
@@ -603,83 +620,243 @@ public:
 					hist << "0";
 				}
 			}
+			if(j==7){
+				break;
+			}
+			hist << endl;
+
+		}
+		hist.close();
+	}
+	void updateHistory(int q[9][9],User user1,User user2,int gamestatus,string turn){
+		int i,j;
+		fstream hist;
+		hist.open("history.txt", ios::app);
+		hist << endl;
+		hist << user1.getUsername() << " " << user1.getColor() << " "<< user1.getLateScore()<<endl;
+		hist << user2.getUsername() << " " << user2.getColor() << " " << user2.getLateScore()<< endl;
+		if(gamestatus==1){
+		hist << "status: finished" << endl; 	
+		}
+		if(gamestatus==0){
+			hist << "status: paused " << turn << endl;
+		}
+		for(j=0;j<8;j++){
+			for(i=0;i<8;i++){
+				if(q[i][j]==1){
+					hist<< "W";
+				}
+				if(q[i][j]==-1){
+					hist<< "B";
+				}
+				if(q[i][j]==0){
+					hist << "0";
+				}
+			}
+			if(j==7){
+				break;
+			}
 			hist << endl;
 		}
 		hist.close();
 	}
-	void saveGame(int q[9][9],User user1,User user2){
-		int i,j;
-		fstream paused;
-		paused.open("paused.txt", ios::app);
-		paused << user1.getUsername() << user2.getUsername()<<endl;
-		for(j=0;j<8;j++){
-			for(i=0;i<8;i++){
-				if(q[i][j]==1){
-					paused<< "W ";
-				}
-				if(q[i][j]==-1){
-					paused<< "B ";
-				}
-				if(q[i][j]==0){
-					paused << "0 ";
-				}
-			}
-			paused << endl;
-		}
-		paused.close();
-	}
 	int checkPaused(User user1,User user2){
-		string first,sec,temp;
-		fstream paused;
-		paused.open("paused.txt", ios::in);
-		while(!paused.eof()){
-			paused >> first >>sec;
-			getline(paused,temp);
-			getline(paused,temp);
-			getline(paused,temp);
-			getline(paused,temp);
-			getline(paused,temp);
-			getline(paused,temp);
-			getline(paused,temp);
-			getline(paused,temp);
-			getline(paused,temp);
-			if((first==user1.getUsername() || sec==user1.getUsername()) && (first==user2.getUsername() || sec==user2.getUsername())){
+		string first,sec,temp,stat;
+		fstream hist;
+		hist.open("history.txt", ios::in);
+		while(!hist.eof()){
+			hist >> first;
+			getline(hist,temp);
+			hist >> sec;
+			getline(hist,temp);
+			hist >> temp >> stat;
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+
+			if((first==user1.getUsername() || sec==user1.getUsername()) && (first==user2.getUsername() || sec==user2.getUsername()) && stat=="paused"){
 				return 1;
 			}
 		}
+		hist.close();
 		return 0;	
 	}
-//	void getLastBoard(int q[9][9], User temp1,User temp2){
-//		string first,sec,temp;
-//		fstream paused;
-//		paused.open("paused.txt", ios::in);
-//		while(!paused.eof()){
-//			paused >> first >>sec;
-//			getline(paused,temp);
-//			if((first==user1.getUsername() || sec==user1.getUsername()) && (first==user2.getUsername() || sec==user2.getUsername())){
-//				paused >> q[i][j] >> q[i][j+1] >> q[i][j+2] >> q[i][j+3]
-//			}	
-//			getline(paused,temp);
-//		}
-//	}	
-};
-	void highlightCell(int x, int y, int color) {
-	    setcolor(color);
-	    rectangle(x * CELL_SIZE + 1, y * CELL_SIZE + 1, x * CELL_SIZE + CELL_SIZE - 1, y * CELL_SIZE + CELL_SIZE - 1);
-	    setcolor(WHITE);
+	void getLastArray(int q[9][9], User temp1,User temp2){
+		string first,sec,temp,stat;
+		int i=0,j=0;
+		char a;
+		fstream hist;
+		hist.open("history.txt", ios::in);
+		while(!hist.eof()){
+			hist >> first;
+			getline(hist,temp);
+			hist >> sec;
+			getline(hist,temp);
+			hist >> temp >> stat;
+			getline(hist,temp);
+			if((first==temp1.getUsername() || sec==temp1.getUsername()) && (first==temp2.getUsername() || sec==temp2.getUsername()) && stat=="paused"){
+				for(j=0;j<8;j++){
+					for(i=0;i<8;i++){
+						hist >> a;
+						if(a=='B'){
+						q[i][j]=-1;	
+						}
+						else if(a=='W'){
+						q[i][j]=1;	
+						}
+						else{
+						q[i][j]=0;	
+						}
+					}
+					getline(hist,temp);
+				}
+			}
+			else{
+				getline(hist,temp);	
+				getline(hist,temp);	
+				getline(hist,temp);	
+				getline(hist,temp);	
+				getline(hist,temp);	
+				getline(hist,temp);	
+				getline(hist,temp);	
+				getline(hist,temp);		
+			}
+		}
+		hist.close();
+	}	
+	string whoseTurn(User user1,User user2){
+		string first,sec,temp,stat,turn,t;
+		fstream hist;
+		hist.open("history.txt", ios::in);
+		while(!hist.eof()){
+			hist >> first;
+			getline(hist,temp);
+			hist >> sec;
+			getline(hist,temp);
+			hist >> temp >> stat;
+			if(stat=="paused"){
+				hist >> t;
+			}
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			if((first==user1.getUsername() || sec==user1.getUsername()) && (first==user2.getUsername() || sec==user2.getUsername()) && stat=="paused"){
+				turn=t;
+			}
+		}
+		hist.close();
+		return turn;
 	}
+	int getColor(User user1,User user2,int num){
+		string first,sec,temp,stat,turn,t;
+		int c1,c2,color;
+		fstream hist;
+		hist.open("history.txt", ios::in);
+		while(!hist.eof()){
+			hist >> first >> c1;
+			getline(hist,temp);
+			hist >> sec >> c2;
+			getline(hist,temp);
+			hist >> temp >> stat;
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			if((first==user1.getUsername() || sec==user1.getUsername()) && (first==user2.getUsername() || sec==user2.getUsername()) && stat=="paused"){
+				if(num==1){
+					color=c1;
+				}
+				if(num==2){
+					color=c2;
+				}
+			}	
+		}
+		hist.close();
+		return color;
+	}
+	void showLastGame(int q[9][9]){
+		string first,sec,temp,stat;
+		int i=0,j=0,s1,s2,score1,score2;
+		char a;
+		fstream hist;
+		hist.open("history.txt", ios::in);
+		while(!hist.eof()){
+			hist >> first >> temp >> s1;
+			getline(hist,temp);
+			hist >> sec >> temp >> s2;
+			getline(hist,temp);
+			hist >> temp >> stat;
+			getline(hist,temp);
+			
+			if(stat=="finished"){
+				score1=s1;
+				score2=s2;
+				for(j=0;j<8;j++){
+					for(i=0;i<8;i++){
+						hist >> a;
+						if(a=='B'){
+						q[i][j]=-1;	
+						}
+						else if(a=='W'){
+						q[i][j]=1;	
+						}
+						else{
+						q[i][j]=0;	
+						}
+					}
+					getline(hist,temp);
+				}	
+			}
+			else{
+			getline(hist,temp);	
+			getline(hist,temp);	
+			getline(hist,temp);	
+			getline(hist,temp);	
+			getline(hist,temp);	
+			getline(hist,temp);	
+			getline(hist,temp);	
+			getline(hist,temp);			
+			}
+		}
+		hist.close();
+		cout << first << " vs " << sec << endl;
+		cout << "scores:" << endl << first << ": " << score1 << endl << sec << ": " << score2 << endl;
+		if(score1>score2){
+			cout << first << " won!\n";
+		}
+		else if(score2>score1){
+			cout << sec << " won!\n";
+		}
+		
+		else if(score1==score2){
+			cout << "draw!\n";
+		}
+		setBoard(q);
+	}
+};
 
-string getUsername(){
-	string username;
-	cout << "enter username: ";
-	cin >> username;
-	return username;
-}
-string getPassword(){
-	string password;
-	cout << "enter password: ";
-	cin >> password;
-	return password;
+//functions
+void highlightCell(int x, int y, int color) {
+    setcolor(color);
+    rectangle(x * CELL_SIZE + 1, y * CELL_SIZE + 1, x * CELL_SIZE + CELL_SIZE - 1, y * CELL_SIZE + CELL_SIZE - 1);
+    setcolor(WHITE);
 }
 vector<User> fillUsers(vector<User> a){
 	string line,user,pass;
@@ -720,6 +897,170 @@ void showVec(vector <User> b){
 		cout << temp.getID() << " " << temp.getUsername() << " " << temp.getPass() << " " << temp.getBestScore() << endl;
 	}
 }
+void playGame(Game play,int Q[9][9],User temp1,User temp2,vector<User> list,int stat){
+	User w;
+	int num,i,j,numb,t,s1=0,s2=0;
+	string user;
+    int gd = DETECT, gm,paused=0;
+    int x = 0, y = 0;
+    int prevX = -1, prevY = -1;
+    
+	cout << "the game starts... ";		
+	if(temp1.isTurn()){
+	cout << endl<< temp1.getUsername() << " turn:\n";
+			}
+			else{
+			cout << endl<< temp2.getUsername() << " turn:\n";
+			}
+				play.setBoard(Q);
+				highlightCell(x, y, YELLOW);
+			
+			User winner;
+			while(true){
+				if(play.isBoardFull(Q)){
+					cout << "\nGAME OVER!\n";
+					temp1.updateScore(Q,-1);
+				    temp2.updateScore(Q,1);
+					temp1.updateBestScore(temp1.getLateScore());
+					temp2.updateBestScore(temp2.getLateScore());
+					winner=play.getWinner(temp1,temp2);
+					for(i=0;i<list.size();i++){
+						User temp=list[i];
+						if(temp.getID()==temp1.getID()){
+							temp.setBestScore(temp1.getBestScore());
+							list[i]=temp;
+				}
+				if(temp.getID()==temp2.getID()){
+					temp.setBestScore(temp2.getBestScore());
+					list[i]=temp;
+				}
+			}
+			fillFile(list);
+			cout << "the winner is: " << play.getWinner(temp1,temp2).getUsername() << endl;
+			cout << "scores:\n" << temp1.getUsername() << ": " << temp1.getLateScore()<< endl;
+			cout << temp2.getUsername() << ": " << temp2.getLateScore() << endl;
+			play.updateHistory(Q,temp1,temp2,1);	
+			cout << "press any key to go back to menu...";
+			getch();
+			closegraph();
+			break;
+		}
+	if(kbhit()) {
+	        char ch = getch();
+	        switch (ch) {
+	            case 77:
+	                if (x < BOARD_SIZE - 1) {
+	                    prevX = x;
+	                    prevY = y;
+	                    x++;
+	                }
+	                break;
+	            case 75:
+	                if (x > 0) {
+	                    prevX = x;
+	                    prevY = y;
+	                    x--;
+	                }
+	                break;
+	            case 72:
+	                if (y > 0) {
+	                    prevX = x;
+	                    prevY = y;
+	                    y--;
+	                }
+	                break;
+	            case 80:
+	                if (y < BOARD_SIZE - 1) {
+	                    prevX = x;
+	                    prevY = y;
+	                    y++;
+	                }
+	                break;
+	                
+	        	case 32:{
+	        		int w;
+	        		if(Q[x][y]==0){
+	            		if(temp1.isTurn() && play.isMoveValid(x,y,temp1.getColor(),Q)){
+		                    play.placePiece(x, y, BLACK);
+		                    Q[x][y]=-1;
+		                    s1+=play.flipLine(x,y,-1,Q);
+		                    s1+=play.flipColumn(x,y,-1,Q);
+		                    s1+=play.flipDiameter(x,y,-1,Q);
+		                    w=play.passTurn(Q,1);
+		                    if(play.passTurn(Q,1)==0){
+			                    temp1.resetTurn();
+			                    temp2.setTurn();
+			                    cout << endl<< temp2.getUsername() << " turn:\n";
+			                    continue;
+							}
+							else{
+								cout << endl<< temp1.getUsername() << " turn:\n";
+							}
+				
+						}
+						 if(temp2.isTurn() && play.isMoveValid(x,y,temp2.getColor(),Q)){
+							play.placePiece(x, y, WHITE);
+		                    Q[x][y]=1;
+		                    s2+=play.flipLine(x,y,1,Q);
+		                    s2+=play.flipColumn(x,y,1,Q);
+		                    s2+=play.flipDiameter(x,y,1,Q);
+		                    if(!play.passTurn(Q,-1)){
+		                   		temp2.resetTurn();
+		                    	temp1.setTurn();
+		                    	cout << endl<< temp1.getUsername() << " turn:\n";
+		                    	continue;
+							}
+							else{
+								cout << endl<< temp2.getUsername() << " turn:\n";
+							}
+						}
+	
+					}
+					break;
+				} 
+				
+				case 'p':
+					cout << "\nGAME PAUSED!\n";
+					temp1.updateScore(Q,-1);
+				    temp2.updateScore(Q,1);
+				    if(temp1.isTurn()){
+				    play.updateHistory(Q,temp1,temp2,0,temp1.getUsername());
+					}
+					else{
+				    play.updateHistory(Q,temp1,temp2,0,temp2.getUsername());
+					}
+				    paused=1;
+					break;
+					      
+	            case 27:
+	                closegraph();        
+	        }
+	        if (prevX != -1) {
+	            highlightCell(prevX, prevY, BLACK);
+	            play.drawBoard();
+	        }
+	        highlightCell(x, y, YELLOW);  
+	        
+	        if(paused==1){
+	        	closegraph();
+	        	break;
+			}
+	 	}	
+	} 
+}
+
+string getUsername(){
+	string username;
+	cout << "enter username: ";
+	cin >> username;
+	return username;
+}
+string getPassword(){
+	string password;
+	cout << "enter password: ";
+	cin >> password;
+	return password;
+}
 void showGame(int q[9][9]){
 	int i,j;
 	for(j=0;j<8;j++){
@@ -747,25 +1088,30 @@ int main(){
 	Q[4][4]=1;
 	Q[3][4]=-1;
 	Q[4][3]=-1;
-    int gd = DETECT, gm;
+    int gd = DETECT, gm,paused=0;
     int x = 0, y = 0;
     int prevX = -1, prevY = -1;
+    
+    //game
     
 	while(true){
 	cout << endl << "Menu:\n" << "1- add player\n" << "2- enter game\n" << "3- review last game\n" << "4- best scores\n" << "5- exit\n";
 	cout << "enter option: ";
 	cin >> num;
 		
+		//keys
 		if(num==1){
+			system("cls");
+			cout << "you are adding a user!\n";
 			list.clear();
 			list= fillUsers(list);
-			showVec(list);
 			User temp;
 			temp.addUser();
 			list.push_back(temp);
 			continue;
 		}
 		if(num==2){
+			system("cls");
 			Admin a;
 			list.clear();
 			list= fillUsers(list);
@@ -807,161 +1153,101 @@ int main(){
 					temp1=list[i];
 					if(user1==temp1.getUsername()){
 						if(getPassword()==temp1.getPass()){
+							system("cls");
 							cout << "welcome user (" << temp1.getUsername() << ")" << endl << "1- single player\n2- two players\nchoose option: ";
 							cin >> numb;
-							if(numb==1){
 								//bot game
+							if(numb==1){
+							
 							}
 							if(numb==2){
-								//2 player game	
+								//2 player game
+								system("cls");
+								cout << "2 player game\n" << "player 2 information:\n";	
+								Game play;
 								string user2=getUsername();
 								for(i=0;i<list.size();i++){
 									User temp2=list[i];
 									if(user2==temp2.getUsername()){
 										if(temp2.getPass()==getPassword()){
-											cout << "second player confirmed!\n" << "player 1: " << temp1.getUsername() << endl << "player 2: " << temp2.getUsername();
-//											if(checkPaused(temp1,temp2)){
-//												int gametype;
-//												cout<< "1- continue the last game\n" << "2- start new game\n" << "enter option: ";
-//												cin >> gametype;
-//												if(gametype==1){
-//													
-//												}
-//												if(gametype==2){
-//													
-//												}
-//											}
-											cout << "\nplayer 1 plays as BLACK\n";
-											cout << "player 2 plays as WHITE\n";
-											cout << "\npress 1 to start the game...\n";
-											temp1.setColor(-1);
-											temp2.setColor(1);
-											temp1.setTurn();
-											temp2.resetTurn();
-											int start;
-											cin >> start;
-
-											if(start==1){
-											cout << "the game starts... ";	
-											Game play;
-											highlightCell(x, y, YELLOW);
-											User winner;
-											while(true){
-												if(play.isBoardFull(Q)){
-													cout << "\nGAME OVER!\n";
-													temp1.updateScore(Q,-1);
-												    temp2.updateScore(Q,1);
-													temp1.updateBestScore(temp1.getLateScore());
-													temp2.updateBestScore(temp2.getLateScore());
-													winner=play.getWinner(temp1,temp2);
-													for(i=0;i<list.size();i++){
-														User temp=list[i];
-														if(temp.getID()==temp1.getID()){
-															temp.setBestScore(temp1.getBestScore());
-															list[i]=temp;
-														}
-														if(temp.getID()==temp2.getID()){
-															temp.setBestScore(temp2.getBestScore());
-															list[i]=temp;
+											system("cls");
+											cout << "second player confirmed!\n" << "player 1: " << temp1.getUsername() << endl << "player 2: " << temp2.getUsername()<< endl;
+											cout << "-------------------\n";
+											if(play.checkPaused(temp1,temp2)){
+												int gametype;
+												cout<< "1- continue previous game\n" << "2- start new game\n" << "enter option: ";
+												cin >> gametype;
+												if(gametype==1){
+													int c1,c2;
+													system("cls");
+													cout << temp1.getUsername() << " vs " << temp2.getUsername() << endl;
+													cout << "you are continuing your last game!\n";
+													play.getLastArray(Q,temp1,temp2);
+													if(play.whoseTurn(temp1,temp2)==temp1.getUsername()){
+														temp1.setTurn();
+														temp2.resetTurn();
+													}
+													else{
+														temp2.setTurn();
+														temp1.resetTurn();
+													}
+													c1=play.getColor(temp1,temp2,1);
+													c2=play.getColor(temp1,temp2,2);
+													temp1.setColor(c1);
+													temp2.setColor(c2);
+													cout << "\npress 1 to start the game...\n";
+													int start;
+													cin >> start;
+													if(start==1){
+														system("cls");
+														playGame(play,Q,temp1, temp2,list,0);	
+													}
+														
+												}
+												
+												if(gametype==2){
+													system("cls");
+													for(i=0;i<9;i++){
+														for(j=0;j<9;j++){
+															Q[i][j]=0;
 														}
 													}
-													fillFile(list);
-													cout << "the winner is: " << play.getWinner(temp1,temp2).getUsername() << endl;
-													cout << "scores:\n" << temp1.getUsername() << ": " << temp1.getLateScore()<< endl;
-													cout << temp2.getUsername() << ": " << temp2.getLateScore() << endl;
-													play.updateHistory(Q,temp1,temp2);	
-													cout << "press any key to go back to menu...";
-													getch();
-													closegraph();
-													break;
+													Q[3][3]=1;
+													Q[4][4]=1;
+													Q[3][4]=-1;
+													Q[4][3]=-1;
+													cout << temp1.getUsername() << " vs " << temp2.getUsername() << endl;
+													cout << "New game started!\n";
+													cout << "player 1 plays as BLACK\n";
+													cout << "player 2 plays as WHITE\n";
+													temp1.setColor(-1);
+													temp2.setColor(1);
+													temp1.setTurn();
+													temp2.resetTurn();
+													cout << "\npress 1 to start the game...\n";
+													int start;
+													cin >> start;
+													if(start==1){
+														system("cls");
+														playGame(play,Q,temp1, temp2,list,1);	
+													}
 												}
-										    if(kbhit()) {
-										            char ch = getch();
-										            switch (ch) {
-										                case 77:
-										                    if (x < BOARD_SIZE - 1) {
-										                        prevX = x;
-										                        prevY = y;
-										                        x++;
-										                    }
-										                    break;
-										                case 75:
-										                    if (x > 0) {
-										                        prevX = x;
-										                        prevY = y;
-										                        x--;
-										                    }
-										                    break;
-										                case 72:
-										                    if (y > 0) {
-										                        prevX = x;
-										                        prevY = y;
-										                        y--;
-										                    }
-										                    break;
-										                case 80:
-										                    if (y < BOARD_SIZE - 1) {
-										                        prevX = x;
-										                        prevY = y;
-										                        y++;
-										                    }
-										                    break;
-										                    
-										            	case 'n':{
-										            		if(Q[x][y]==0){
-											            		if(temp1.isTurn()){
-												                    play.placePiece(x, y, BLACK);
-												                    Q[x][y]=-1;
-												                    s1+=play.flipLine(x,y,-1,Q);
-												                    s1+=play.flipColumn(x,y,-1,Q);
-												                    s1+=play.flipDiameter(x,y,-1,Q);
-//												                    if(play.passTurn(Q,1)==0){	
-																	
-													                    temp1.resetTurn();
-													                    temp2.setTurn();
-													                    continue;
-//																	}
-														
-																}
-																 if(temp2.isTurn()){
-																	play.placePiece(x, y, WHITE);
-												                    Q[x][y]=1;
-												                    s2+=play.flipLine(x,y,1,Q);
-												                    s2+=play.flipColumn(x,y,1,Q);
-												                    s2+=play.flipDiameter(x,y,1,Q);
-//												                    if(!play.passTurn(Q,-1)){
-												                    temp2.resetTurn();
-												                    temp1.setTurn();
-												                    continue;
-//																	}													
-																}
-//																cout << "\nplayer 1 score: " << temp1.getLateScore();
-//																cout << "\nplayer 2 score: " << temp2.getLateScore();
-						
-															}
-															break;
-														} 
-														
-														case 'p':
-															cout << "\nGAME PAUSED!\n";
-															temp1.updateScore(Q,-1);
-														    temp2.updateScore(Q,1);
-															break;
-															      
-										                case 27:
-										                    closegraph();        
-										            }
-										            
-										            if (prevX != -1) {
-										                highlightCell(prevX, prevY, BLACK);
-										                play.drawBoard();
-										            }
-										            highlightCell(x, y, YELLOW);  
-
-										   	 	}	
-												
 											}
-										   	 	
+											else{
+												system("cls");
+												cout << "\nplayer 1 plays as BLACK\n";
+												cout << "player 2 plays as WHITE\n";
+												temp1.setColor(-1);
+												temp2.setColor(1);
+												temp1.setTurn();
+												temp2.resetTurn();
+												cout << "\npress 1 to start the game...\n";
+												int start;
+												cin >> start;
+												if(start==1){
+													system("cls");
+													playGame(play,Q,temp1, temp2,list,1);	
+												}
 											}
 										}
 									}
@@ -972,9 +1258,44 @@ int main(){
 				}
 			}
 		}
-	
+		if(num==3){
+			system("cls");
+			cout << "review last game:\n";
+			Game play;
+			play.showLastGame(Q);
+			cout << "press any key to go back to menu...";
+			getch();
+			closegraph();
+		}
 		if(num==4){
-			
+			system("cls");
+			int i,j;
+			User temp1,temp2,temp;
+			vector <User> t;
+			string name;
+			list.clear();
+			list= fillUsers(list);
+			t=list;
+			for(i=0;i<t.size()-1;i++){
+				for(j=i+1;j<t.size();j++){
+					temp1=t[i];
+					temp2=t[j];
+					if(temp2.getBestScore()>temp1.getBestScore()){
+						temp=temp1;
+						temp1=temp2;
+						temp2=temp;
+					}
+					t[i]=temp1;
+					t[j]=temp2;
+				}
+			}
+			cout << "Best scores:\n"; 
+			showVec(t);	
+			cout << "---------------------";
+
+		}
+		if(num==5){
+			break;
 		}
 	}
 }
