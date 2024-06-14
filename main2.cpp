@@ -8,6 +8,29 @@
 #define BOARD_SIZE 8
 using namespace std;
 
+void showGame(int q[9][9]){
+	int i,j;
+	for(j=0;j<8;j++){
+		for(i=0;i<8;i++){
+			cout << q[i][j];
+		}
+		cout << endl;
+	}
+	cout << "********" << endl;
+}
+string getUsername(){
+	string username;
+	cout << "enter username: ";
+	cin >> username;
+	return username;
+}
+string getPassword(){
+	string password;
+	cout << "enter password: ";
+	cin >> password;
+	return password;
+}
+
 //classes
 class User{
 protected:
@@ -163,15 +186,10 @@ public:
 	}
 };
 
-class Bot : User{
-	
-};
-
 class Game{
 public:
 	Game(){
 	}
-	
 	void placePiece(int x, int y, int color) {	
 	    int centerX = x * CELL_SIZE + CELL_SIZE / 2;
 	    int centerY = y * CELL_SIZE + CELL_SIZE / 2;
@@ -600,8 +618,8 @@ public:
 		fstream hist;
 		hist.open("history.txt", ios::app);
 		hist << endl;
-		hist << user1.getUsername() << " " << user1.getLateScore()<<endl;
-		hist << user2.getUsername() << " " << user2.getLateScore()<< endl;
+		hist << user1.getUsername() << " " << user1.getColor() << " "<< user1.getLateScore()<<endl;
+		hist << user2.getUsername() << " " << user2.getColor() << " " << user2.getLateScore()<< endl;
 		if(gamestatus==1){
 		hist << "status: finished" << endl; 	
 		}
@@ -628,7 +646,7 @@ public:
 		}
 		hist.close();
 	}
-	void updateHistory(int q[9][9],User user1,User user2,int gamestatus,string turn){
+	void updateHistory(int q[9][9],User user1,User user2,int gamestatus,string turn,string level){
 		int i,j;
 		fstream hist;
 		hist.open("history.txt", ios::app);
@@ -639,7 +657,7 @@ public:
 		hist << "status: finished" << endl; 	
 		}
 		if(gamestatus==0){
-			hist << "status: paused " << turn << endl;
+			hist << "status: paused " << turn << " " << level << endl;
 		}
 		for(j=0;j<8;j++){
 			for(i=0;i<8;i++){
@@ -759,6 +777,36 @@ public:
 		hist.close();
 		return turn;
 	}
+	string checkLevel(User user1,User user2){
+		string first,sec,temp,stat,turn,t;
+		string l,level;
+		fstream hist;
+		hist.open("history.txt", ios::in);
+		while(!hist.eof()){
+			hist >> first;
+			getline(hist,temp);
+			hist >> sec;
+			getline(hist,temp);
+			hist >> temp >> stat;
+			if(stat=="paused"){
+				hist >> t >> l;
+			}
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			getline(hist,temp);
+			if((first==user1.getUsername() || sec==user1.getUsername()) && (first==user2.getUsername() || sec==user2.getUsername()) && stat=="paused"){
+				level=l;
+			}
+		}
+		hist.close();
+		return level;
+	}
 	int getColor(User user1,User user2,int num){
 		string first,sec,temp,stat,turn,t;
 		int c1,c2,color;
@@ -852,6 +900,143 @@ public:
 	}
 };
 
+class Bot : User{
+public:
+	Bot(){
+		UserName="Bot";
+	}
+	
+	int ChooseHardI(int q[9][9],int color){
+		int max=0,i,j,a,indexI,indexJ,dif=0;
+		Game botG;
+		for(j=0;j<8;j++){
+			for(i=0;i<8;i++){
+				a=0;
+				
+				if(q[i][j]==0 && botG.isMoveValid(i,j,color,q)){
+					a+=botG.checkColumn(i,j,color,q);
+					a+=botG.checkDiameter(i,j,color,q);
+					a+=botG.checkLine(i,j,color,q);
+				}
+				if(a>max && (i-j>=dif || j-i>=dif)){
+					max=a;
+					indexI=i;
+					indexJ=j;
+					if(i<j)
+					dif=j-i;
+					else
+					dif=i-j;
+				}
+			}
+		}
+		return indexI;
+	}
+	int ChooseHardJ(int q[9][9],int color){
+		int max=0,i,j,a,indexI,indexJ,dif=0;
+		Game botG;
+		for(j=0;j<8;j++){
+			for(i=0;i<8;i++){
+				a=0;
+				if(q[i][j]==0 && botG.isMoveValid(i,j,color,q)){
+					a+=botG.checkColumn(i,j,color,q);
+					a+=botG.checkDiameter(i,j,color,q);
+					a+=botG.checkLine(i,j,color,q);
+				}
+				if(a>max && (i-j>=dif || j-i>=dif)){
+					max=a;
+					indexI=i;
+					indexJ=j;
+					if(i<j)
+					dif=j-i;
+					else
+					dif=i-j;
+				}
+			}
+		}
+		return indexJ;
+	}
+	int ChooseMediumI(int q[9][9],int color){
+		int max=0,i,j,a,indexI,indexJ,dif=0;
+		Game botG;
+		for(j=0;j<8;j++){
+			for(i=0;i<8;i++){
+				a=0;
+				
+				if(q[i][j]==0 && botG.isMoveValid(i,j,color,q)){
+					a+=botG.checkColumn(i,j,color,q);
+					a+=botG.checkDiameter(i,j,color,q);
+					a+=botG.checkLine(i,j,color,q);
+				}
+				if(a>max){
+					max=a;
+					indexI=i;
+					indexJ=j;
+				}
+			}
+		}
+		return indexI;
+	}
+	int ChooseMediumJ(int q[9][9],int color){
+		int max=0,i,j,a,indexI,indexJ,dif=0;
+		Game botG;
+		for(j=0;j<8;j++){
+			for(i=0;i<8;i++){
+				a=0;
+				
+				if(q[i][j]==0 && botG.isMoveValid(i,j,color,q)){
+					a+=botG.checkColumn(i,j,color,q);
+					a+=botG.checkDiameter(i,j,color,q);
+					a+=botG.checkLine(i,j,color,q);
+				}
+				if(a>max){
+					max=a;
+					indexI=i;
+					indexJ=j;
+				}
+			}
+		}
+		return indexJ;
+	}
+	int ChooseEasyI(int q[9][9],int color){
+		int max=0,i,j,a,indexI;
+		Game botG;
+		for(j=0;j<8;j++){
+			for(i=0;i<8;i++){
+				a=0;
+				if(q[i][j]==0 && botG.isMoveValid(i,j,color,q)){
+					a+=botG.checkColumn(i,j,color,q);
+					a+=botG.checkDiameter(i,j,color,q);
+					a+=botG.checkLine(i,j,color,q);
+					if(a>0){
+					indexI=i;
+					return indexI;
+					}
+				}
+			}
+		}
+		return -1;
+	}
+	int ChooseEasyJ(int q[9][9],int color){
+		int max=0,i,j,a,indexJ;
+		Game botG;
+		for(j=0;j<8;j++){
+			for(i=0;i<8;i++){
+				a=0;
+				if(q[i][j]==0 && botG.isMoveValid(i,j,color,q)){
+					a+=botG.checkColumn(i,j,color,q);
+					a+=botG.checkDiameter(i,j,color,q);
+					a+=botG.checkLine(i,j,color,q);
+					if(a>0){
+					indexJ=j;
+					return indexJ;
+					}
+				}
+			}
+		}
+		return -1;
+	}
+};
+
 //functions
 void highlightCell(int x, int y, int color) {
     setcolor(color);
@@ -897,38 +1082,38 @@ void showVec(vector <User> b){
 		cout << temp.getID() << " " << temp.getUsername() << " " << temp.getPass() << " " << temp.getBestScore() << endl;
 	}
 }
-void playGame(Game play,int Q[9][9],User temp1,User temp2,vector<User> list,int stat){
+void playGame(Game play,int Q[9][9],User temp1,User temp2,vector<User> list,int stat,string level){
 	User w;
 	int num,i,j,numb,t,s1=0,s2=0;
 	string user;
-    int gd = DETECT, gm,paused=0;
+    int gd = DETECT, gm,paused=0,end=0;
     int x = 0, y = 0;
     int prevX = -1, prevY = -1;
     
 	cout << "the game starts... ";		
 	if(temp1.isTurn()){
 	cout << endl<< temp1.getUsername() << " turn:\n";
-			}
-			else{
-			cout << endl<< temp2.getUsername() << " turn:\n";
-			}
-				play.setBoard(Q);
-				highlightCell(x, y, YELLOW);
+	}
+	else{
+	cout << endl<< temp2.getUsername() << " turn:\n";
+	}
+	play.setBoard(Q);
+	highlightCell(x, y, YELLOW);
 			
-			User winner;
-			while(true){
-				if(play.isBoardFull(Q)){
-					cout << "\nGAME OVER!\n";
-					temp1.updateScore(Q,-1);
-				    temp2.updateScore(Q,1);
-					temp1.updateBestScore(temp1.getLateScore());
-					temp2.updateBestScore(temp2.getLateScore());
-					winner=play.getWinner(temp1,temp2);
-					for(i=0;i<list.size();i++){
-						User temp=list[i];
-						if(temp.getID()==temp1.getID()){
-							temp.setBestScore(temp1.getBestScore());
-							list[i]=temp;
+	User winner;
+	while(true){
+		if(play.isBoardFull(Q) || (play.passTurn(Q,1) && play.passTurn(Q,-1)) || end){
+			cout << "\nGAME OVER!\n";
+			temp1.updateScore(Q,-1);
+		    temp2.updateScore(Q,1);
+			temp1.updateBestScore(temp1.getLateScore());
+			temp2.updateBestScore(temp2.getLateScore());
+			winner=play.getWinner(temp1,temp2);
+			for(i=0;i<list.size();i++){
+				User temp=list[i];
+				if(temp.getID()==temp1.getID()){
+					temp.setBestScore(temp1.getBestScore());
+					list[i]=temp;
 				}
 				if(temp.getID()==temp2.getID()){
 					temp.setBestScore(temp2.getBestScore());
@@ -944,133 +1129,201 @@ void playGame(Game play,int Q[9][9],User temp1,User temp2,vector<User> list,int 
 			getch();
 			closegraph();
 			break;
-		}
-	if(kbhit()) {
-	        char ch = getch();
-	        switch (ch) {
-	            case 77:
-	                if (x < BOARD_SIZE - 1) {
-	                    prevX = x;
-	                    prevY = y;
-	                    x++;
-	                }
-	                break;
-	            case 75:
-	                if (x > 0) {
-	                    prevX = x;
-	                    prevY = y;
-	                    x--;
-	                }
-	                break;
-	            case 72:
-	                if (y > 0) {
-	                    prevX = x;
-	                    prevY = y;
-	                    y--;
-	                }
-	                break;
-	            case 80:
-	                if (y < BOARD_SIZE - 1) {
-	                    prevX = x;
-	                    prevY = y;
-	                    y++;
-	                }
-	                break;
-	                
-	        	case 32:{
-	        		int w;
-	        		if(Q[x][y]==0){
-	            		if(temp1.isTurn() && play.isMoveValid(x,y,temp1.getColor(),Q)){
-		                    play.placePiece(x, y, BLACK);
-		                    Q[x][y]=-1;
-		                    s1+=play.flipLine(x,y,-1,Q);
-		                    s1+=play.flipColumn(x,y,-1,Q);
-		                    s1+=play.flipDiameter(x,y,-1,Q);
-		                    w=play.passTurn(Q,1);
-		                    if(play.passTurn(Q,1)==0){
-			                    temp1.resetTurn();
-			                    temp2.setTurn();
-			                    cout << endl<< temp2.getUsername() << " turn:\n";
-			                    continue;
-							}
-							else{
-								cout << endl<< temp1.getUsername() << " turn:\n";
-							}
-				
-						}
-						 if(temp2.isTurn() && play.isMoveValid(x,y,temp2.getColor(),Q)){
-							play.placePiece(x, y, WHITE);
-		                    Q[x][y]=1;
-		                    s2+=play.flipLine(x,y,1,Q);
-		                    s2+=play.flipColumn(x,y,1,Q);
-		                    s2+=play.flipDiameter(x,y,1,Q);
-		                    if(!play.passTurn(Q,-1)){
-		                   		temp2.resetTurn();
-		                    	temp1.setTurn();
-		                    	cout << endl<< temp1.getUsername() << " turn:\n";
-		                    	continue;
-							}
-							else{
-								cout << endl<< temp2.getUsername() << " turn:\n";
-							}
-						}
-	
-					}
-					break;
-				} 
-				
-				case 'p':
-					cout << "\nGAME PAUSED!\n";
-					temp1.updateScore(Q,-1);
-				    temp2.updateScore(Q,1);
-				    if(temp1.isTurn()){
-				    play.updateHistory(Q,temp1,temp2,0,temp1.getUsername());
-					}
-					else{
-				    play.updateHistory(Q,temp1,temp2,0,temp2.getUsername());
-					}
-				    paused=1;
-					break;
-					      
-	            case 27:
-	                closegraph();        
-	        }
-	        if (prevX != -1) {
-	            highlightCell(prevX, prevY, BLACK);
-	            play.drawBoard();
-	        }
-	        highlightCell(x, y, YELLOW);  
-	        
-	        if(paused==1){
-	        	closegraph();
-	        	break;
+		}	
+		Bot bot;
+		Game play;
+		while(temp2.isTurn() && temp2.getUsername() == "Bot" && level=="3"){
+			int i,j,a;
+			sleep(1);
+			if(play.passTurn(Q,1)&& play.passTurn(Q,-1)){
+				end=1;
 			}
-	 	}	
+			i=bot.ChooseHardI(Q,1);
+			j=bot.ChooseHardJ(Q,1);
+			Q[i][j]=1;
+			play.placePiece(i,j,WHITE);
+			a+=play.flipLine(i,j,1,Q);
+			a+=play.flipColumn(i,j,1,Q);
+			a+=play.flipDiameter(i,j,1,Q);
+            if(play.passTurn(Q,-1)==0){
+                temp2.resetTurn();
+                temp1.setTurn();
+                system("cls");
+                cout << endl<< temp1.getUsername() << " turn:\n";
+			}
+			else{
+                system("cls");
+                cout << "BLACK has no moves!";
+				cout << endl << temp2.getUsername() << " turn:\n";
+			}
+		}
+		while(temp2.isTurn() && temp2.getUsername() == "Bot" && level=="2"){
+			int i,j,a;
+			sleep(1);
+			if(play.passTurn(Q,1)&& play.passTurn(Q,-1)){
+				end=1;
+			}
+			i=bot.ChooseMediumI(Q,1);
+			j=bot.ChooseMediumJ(Q,1);
+			Q[i][j]=1;
+			play.placePiece(i,j,WHITE);
+			a+=play.flipLine(i,j,1,Q);
+			a+=play.flipColumn(i,j,1,Q);
+			a+=play.flipDiameter(i,j,1,Q);
+            if(play.passTurn(Q,-1)==0){
+                temp2.resetTurn();
+                temp1.setTurn();
+                system("cls");
+                cout << endl<< temp1.getUsername() << " turn:\n";
+			}
+			else{
+                system("cls");
+                cout << "BLACK has no moves!";
+				cout << endl << temp2.getUsername() << " turn:\n";
+			}
+		}			
+		while(temp2.isTurn() && temp2.getUsername() == "Bot" && level=="1"){
+			int i,j,a;
+			sleep(1);
+			if(play.passTurn(Q,1)&& play.passTurn(Q,-1)){
+				end=1;
+			}
+			i=bot.ChooseEasyI(Q,1);
+			j=bot.ChooseEasyJ(Q,1);
+			
+			Q[i][j]=1;
+			play.placePiece(i,j,WHITE);
+			a+=play.flipLine(i,j,1,Q);
+			a+=play.flipColumn(i,j,1,Q);
+			a+=play.flipDiameter(i,j,1,Q);
+            if(play.passTurn(Q,-1)==0){
+                temp2.resetTurn();
+                temp1.setTurn();
+                system("cls");
+                cout << endl<< temp1.getUsername() << " turn:\n";
+			}
+			else{
+                system("cls");
+                cout << "BLACK has no moves!";
+				cout << endl << temp2.getUsername() << " turn:\n";
+			}
+		}
+
+		if(kbhit()) {
+		        char ch = getch();
+		        switch (ch) {
+		            case 77:
+		                if (x < BOARD_SIZE - 1) {
+		                    prevX = x;
+		                    prevY = y;
+		                    x++;
+		                }
+		                break;
+		            case 75:
+		                if (x > 0) {
+		                    prevX = x;
+		                    prevY = y;
+		                    x--;
+		                }
+		                break;
+		            case 72:
+		                if (y > 0) {
+		                    prevX = x;
+		                    prevY = y;
+		                    y--;
+		                }
+		                break;
+		            case 80:
+		                if (y < BOARD_SIZE - 1) {
+		                    prevX = x;
+		                    prevY = y;
+		                    y++;
+		                }
+		                break;
+		                
+		        	case 32:{
+		        		int w;
+		        		if(Q[x][y]==0){
+		            		if(temp1.isTurn() && play.isMoveValid(x,y,temp1.getColor(),Q)){
+			                    play.placePiece(x, y, BLACK);
+			                    Q[x][y]=-1;
+			                    s1+=play.flipLine(x,y,-1,Q);
+			                    s1+=play.flipColumn(x,y,-1,Q);
+			                    s1+=play.flipDiameter(x,y,-1,Q);
+			                    if(play.passTurn(Q,1)==0){
+				                    temp1.resetTurn();
+				                    temp2.setTurn();
+				                    cout << endl<< temp2.getUsername() << " turn:\n";
+				                    continue;
+								}
+								if(play.passTurn(Q,1)&& play.passTurn(Q,-1)){
+									cout << "no moves left!\n";
+									end=1;
+								break;
+								}
+								else{
+									cout << "WHITE has no moves!\n";
+									cout << endl<< temp1.getUsername() << " turn:\n";
+								}
+							}
+							 if(temp2.isTurn() && play.isMoveValid(x,y,temp2.getColor(),Q) && temp2.getUsername()!="Bot"){
+								play.placePiece(x, y, WHITE);
+			                    Q[x][y]=1;
+			                    s2+=play.flipLine(x,y,1,Q);
+			                    s2+=play.flipColumn(x,y,1,Q);
+			                    s2+=play.flipDiameter(x,y,1,Q);
+			                    if(play.passTurn(Q,-1)==0){
+			                   		temp2.resetTurn();
+			                    	temp1.setTurn();
+			                    	cout << endl<< temp1.getUsername() << " turn:\n";
+			                    	continue;
+								}
+								else{
+									cout << "BLACK has no moves!\n";
+									cout << endl<< temp2.getUsername() << " turn:\n";
+								}
+								if(play.passTurn(Q,1)&& play.passTurn(Q,-1)){
+									cout << "no moves left!\n";
+									end=1;
+									break;
+								}
+							}
+		
+						}
+						break;
+					} 
+					
+					case 'p':
+						cout << "\nGAME PAUSED!\n";
+						temp1.updateScore(Q,-1);
+					    temp2.updateScore(Q,1);
+					    if(temp1.isTurn()){
+					    play.updateHistory(Q,temp1,temp2,0,temp1.getUsername(),level);
+						}
+						else{
+					    play.updateHistory(Q,temp1,temp2,0,temp2.getUsername(),level);
+						}
+					    paused=1;
+						break;
+						
+		            case 27:
+		                closegraph();        
+		        }
+		        if (prevX != -1) {
+		            highlightCell(prevX, prevY, BLACK);
+		            play.drawBoard();
+		        }
+		        highlightCell(x, y, YELLOW);  
+		        
+		        if(paused==1){
+		        	closegraph();
+		        	break;
+				}
+		 	}	
 	} 
 }
 
-string getUsername(){
-	string username;
-	cout << "enter username: ";
-	cin >> username;
-	return username;
-}
-string getPassword(){
-	string password;
-	cout << "enter password: ";
-	cin >> password;
-	return password;
-}
-void showGame(int q[9][9]){
-	int i,j;
-	for(j=0;j<8;j++){
-		for(i=0;i<8;i++){
-			cout << q[i][j];
-		}
-		cout << endl;
-	}
-	cout << "********" << endl;
-}
+
 
 int main(){
 	User w;
@@ -1078,6 +1331,15 @@ int main(){
 	string user;
 	vector <User> list;
 	list= fillUsers(list);
+    int gd = DETECT, gm,paused=0;
+    int x = 0, y = 0;
+    int prevX = -1, prevY = -1;
+    
+    //game
+	while(true){
+	cout << endl << "Menu:\n" << "1- add player\n" << "2- enter game\n" << "3- review last game\n" << "4- best scores\n" << "5- exit\n";
+	cout << "enter option: ";
+	cin >> num;
 	int Q[9][9];
 	for(i=0;i<9;i++){
 		for(j=0;j<9;j++){
@@ -1088,16 +1350,6 @@ int main(){
 	Q[4][4]=1;
 	Q[3][4]=-1;
 	Q[4][3]=-1;
-    int gd = DETECT, gm,paused=0;
-    int x = 0, y = 0;
-    int prevX = -1, prevY = -1;
-    
-    //game
-    
-	while(true){
-	cout << endl << "Menu:\n" << "1- add player\n" << "2- enter game\n" << "3- review last game\n" << "4- best scores\n" << "5- exit\n";
-	cout << "enter option: ";
-	cin >> num;
 		
 		//keys
 		if(num==1){
@@ -1158,7 +1410,92 @@ int main(){
 							cin >> numb;
 								//bot game
 							if(numb==1){
-							
+								User temp2;
+								Game play;
+								temp2.setUserName("Bot");
+								system("cls");
+								string level="0";
+								if(play.checkPaused(temp1,temp2)){
+									int gametype;
+									cout<< "1- continue previous game\n" << "2- start new game\n" << "enter option: ";
+									cin >> gametype;
+									if(gametype==1){
+										int c1,c2;
+										system("cls");
+										cout << temp1.getUsername() << " vs " << temp2.getUsername() << endl;
+										cout << "you are continuing your last game!\n";
+										play.getLastArray(Q,temp1,temp2);
+										level=play.checkLevel(temp1,temp2);
+										if(play.whoseTurn(temp1,temp2)==temp1.getUsername()){
+											temp1.setTurn();
+											temp2.resetTurn();
+										}
+										else{
+											temp2.setTurn();
+											temp1.resetTurn();
+										}
+										c1=play.getColor(temp1,temp2,1);
+										c2=play.getColor(temp1,temp2,2);
+										temp1.setColor(c1);
+										temp2.setColor(c2);
+										cout << "\npress 1 to start the game...\n";
+										int start;
+										cin >> start;
+										if(start==1){
+											system("cls");
+											playGame(play,Q,temp1, temp2,list,0,level);	
+										}
+									}
+									
+									if(gametype==2){
+										system("cls");
+										for(i=0;i<9;i++){
+											for(j=0;j<9;j++){
+												Q[i][j]=0;
+											}
+										}
+										Q[3][3]=1;
+										Q[4][4]=1;
+										Q[3][4]=-1;
+										Q[4][3]=-1;
+										cout << temp1.getUsername() << " vs " << temp2.getUsername() << endl;
+										cout << "1-Easy\n2-Medium\n3-Hard\n" << "choose game level: ";
+										cin >> level;
+										system("cls");
+										cout << "\nYou play as BLACK\n";
+										cout << "Bot plays as WHITE\n";
+										temp1.setColor(-1);
+										temp2.setColor(1);
+										temp1.setTurn();
+										temp2.resetTurn();
+										cout << "\npress 1 to start the game...\n";
+										int start;
+										cin >> start;
+										if(start==1){
+											system("cls");
+											playGame(play,Q,temp1, temp2,list,1,level);	
+										}
+									}
+								}
+								else{
+									int start;
+									cout << temp1.getUsername() << " vs " << temp2.getUsername() << endl;
+									cout << "1-Easy\n2-Medium\n3-Hard\n" << "choose game level: ";
+									cin >> level;
+									system("cls");
+									cout << "\nYou play as BLACK\n";
+									cout << "Bot plays as WHITE\n";
+									temp1.setColor(-1);
+									temp2.setColor(1);
+									temp1.setTurn();
+									temp2.resetTurn();
+									cout << "\npress 1 to start the game...\n";
+									cin >> start;
+									if(start==1){
+										system("cls");
+										playGame(play,Q,temp1, temp2,list,1,level);	
+									}
+								}
 							}
 							if(numb==2){
 								//2 player game
@@ -1200,9 +1537,8 @@ int main(){
 													cin >> start;
 													if(start==1){
 														system("cls");
-														playGame(play,Q,temp1, temp2,list,0);	
-													}
-														
+														playGame(play,Q,temp1,temp2,list,0,"0");	
+													}		
 												}
 												
 												if(gametype==2){
@@ -1229,7 +1565,7 @@ int main(){
 													cin >> start;
 													if(start==1){
 														system("cls");
-														playGame(play,Q,temp1, temp2,list,1);	
+														playGame(play,Q,temp1, temp2,list,1,"0");	
 													}
 												}
 											}
@@ -1246,7 +1582,7 @@ int main(){
 												cin >> start;
 												if(start==1){
 													system("cls");
-													playGame(play,Q,temp1, temp2,list,1);	
+													playGame(play,Q,temp1, temp2,list,1,"0");	
 												}
 											}
 										}
