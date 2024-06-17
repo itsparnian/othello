@@ -33,7 +33,7 @@ string getPassword(){
 
 //classes
 class User{
-protected:
+private:
 	int ID;
 	string UserName;
 	string Password;
@@ -63,6 +63,10 @@ public:
 		cout << "please enter your username: ";
 		cin >> username;
 		
+		while(username=="Bot"){
+			cout << "invalid username!" << endl << "enter username: ";
+			cin >> username;		
+		}
 		while(!isUserValid(username)){
 			cout << "username already exits!" << endl << "enter username: ";
 			cin >> username;
@@ -111,7 +115,10 @@ public:
 		}
 		return 0;
 	}
-
+	int isTurn(){
+		return this->Turn;
+	}
+	//getter
 	int getID(){
 		return ID;
 	}
@@ -126,6 +133,12 @@ public:
 	}
 	int getLateScore(){
 		return LateScore;
+	}
+	int getColor(){
+		return Color;
+	}
+	//setter
+	virtual void setData(){
 	}
 	void updateScore(int q[9][9],int color){
 		int i,j,count=0;
@@ -142,8 +155,7 @@ public:
 		if(score>BestScore){
 			BestScore=score;
 		}
-	}
-	
+	}	
 	void setID(int id){
 		ID=id;
 	}
@@ -156,36 +168,29 @@ public:
 	void setBestScore(int score){
 		BestScore=score;
 	}
+	void setColor(int colorNum){
+		Color=colorNum;
+	}
 	void setTurn(){
 		Turn=1;
 	}
 	void resetTurn(){
 		Turn=0;
 	}
-	int isTurn(){
-		return this->Turn;
-	}
-	void setColor(int colorNum){
-		Color=colorNum;
-	}
-	int getColor(){
-		return Color;
-	}
 };	
 
 class Admin : public User{
 private:
 	void setData(){
-		this->ID=1;
-		this->UserName="Admin";
-		this->Password="admin";	
+		setID(1);
+		setUserName("Admin");
+		setPassword("admin");
 	}
 public:
 	Admin(){
 		setData();
 	}
 };
-
 class Game{
 public:
 	Game(){
@@ -220,7 +225,8 @@ public:
 		}
 		
 	}
-	int flipLine(int x,int y,int color, int q[9][9]){
+	
+	void flipLine(int x,int y,int color, int q[9][9]){
 		int i,countB=0,countA=0,index=-1;
 		for(i=x-1;i>=0;i--){
 			if(q[i][y]==0){
@@ -267,7 +273,6 @@ public:
 				}
 			}		
 		}
-		return countA+countB;
 	}
 	int checkLine(int x,int y,int color, int q[9][9]){
 		int i,countB=0,countA=0,index=-1;
@@ -302,7 +307,7 @@ public:
 		}
 		return countA+countB;
 	}
-	int flipColumn(int x,int y,int color, int q[9][9]){
+	void flipColumn(int x,int y,int color, int q[9][9]){
 		int i,j,countB=0,countA=0,index=-1;
 		for(j=y-1;j>=0;j--){
 			if(q[x][j]==0){
@@ -349,7 +354,6 @@ public:
 				}
 			}		
 		}
-		return countA+countB;
 	}
 	int checkColumn(int x,int y,int color, int q[9][9]){
 		int i,j,countB=0,countA=0,index=-1;
@@ -384,7 +388,7 @@ public:
 		}
 		return countA+countB;
 	}
-	int flipDiameter(int x,int y,int color,int q[9][9]){
+	void flipDiameter(int x,int y,int color,int q[9][9]){
 		int i,j,countB=0,countA=0,countBB=0,countAA=0,index=-1;
 		for(i=1;i<8;i++){
 			if(x+i>=8 || y-i<0 || q[x+i][y-i]==0){
@@ -482,7 +486,6 @@ public:
 					}	
 			}
 		}
-		return countA+countB+countAA+countBB;
 	}
 	int checkDiameter(int x,int y,int color,int q[9][9]){
 		int i,j,countB=0,countA=0,countBB=0,countAA=0,index=-1;
@@ -553,14 +556,15 @@ public:
 		}
 		return countA+countB+countAA+countBB;
 	}
-	User checkTurn(User a,User b){
-		if(a.isTurn()){
-			return a;
-		}
-		else if(b.isTurn()){
-			return b;
-		}
-	}
+	
+//	User checkTurn(User a,User b){
+//		if(a.isTurn()){
+//			return a;
+//		}
+//		else if(b.isTurn()){
+//			return b;
+//		}
+//	}
 	int isMoveValid(int x,int y,int color, int q[9][9]){
 		int count=0;
 		count+=checkLine(x,y,color,q);
@@ -901,11 +905,14 @@ public:
 };
 
 class Bot : User{
+private:
+	void setData(){
+		setUserName("Bot");		
+	}
 public:
 	Bot(){
-		UserName="Bot";
+		setData();
 	}
-	
 	int ChooseHardI(int q[9][9],int color){
 		int max=0,i,j,a,indexI,indexJ,dif=0;
 		Game botG;
@@ -1137,14 +1144,15 @@ void playGame(Game play,int Q[9][9],User temp1,User temp2,vector<User> list,int 
 			sleep(1);
 			if(play.passTurn(Q,1)&& play.passTurn(Q,-1)){
 				end=1;
+				break;
 			}
 			i=bot.ChooseHardI(Q,1);
 			j=bot.ChooseHardJ(Q,1);
 			Q[i][j]=1;
 			play.placePiece(i,j,WHITE);
-			a+=play.flipLine(i,j,1,Q);
-			a+=play.flipColumn(i,j,1,Q);
-			a+=play.flipDiameter(i,j,1,Q);
+			play.flipLine(i,j,1,Q);
+			play.flipColumn(i,j,1,Q);
+			play.flipDiameter(i,j,1,Q);
             if(play.passTurn(Q,-1)==0){
                 temp2.resetTurn();
                 temp1.setTurn();
@@ -1155,6 +1163,7 @@ void playGame(Game play,int Q[9][9],User temp1,User temp2,vector<User> list,int 
                 system("cls");
                 cout << "BLACK has no moves!";
 				cout << endl << temp2.getUsername() << " turn:\n";
+				continue;
 			}
 		}
 		while(temp2.isTurn() && temp2.getUsername() == "Bot" && level=="2"){
@@ -1162,14 +1171,15 @@ void playGame(Game play,int Q[9][9],User temp1,User temp2,vector<User> list,int 
 			sleep(1);
 			if(play.passTurn(Q,1)&& play.passTurn(Q,-1)){
 				end=1;
+				break;
 			}
 			i=bot.ChooseMediumI(Q,1);
 			j=bot.ChooseMediumJ(Q,1);
 			Q[i][j]=1;
 			play.placePiece(i,j,WHITE);
-			a+=play.flipLine(i,j,1,Q);
-			a+=play.flipColumn(i,j,1,Q);
-			a+=play.flipDiameter(i,j,1,Q);
+			play.flipLine(i,j,1,Q);
+			play.flipColumn(i,j,1,Q);
+			play.flipDiameter(i,j,1,Q);
             if(play.passTurn(Q,-1)==0){
                 temp2.resetTurn();
                 temp1.setTurn();
@@ -1180,6 +1190,7 @@ void playGame(Game play,int Q[9][9],User temp1,User temp2,vector<User> list,int 
                 system("cls");
                 cout << "BLACK has no moves!";
 				cout << endl << temp2.getUsername() << " turn:\n";
+				continue;
 			}
 		}			
 		while(temp2.isTurn() && temp2.getUsername() == "Bot" && level=="1"){
@@ -1187,15 +1198,16 @@ void playGame(Game play,int Q[9][9],User temp1,User temp2,vector<User> list,int 
 			sleep(1);
 			if(play.passTurn(Q,1)&& play.passTurn(Q,-1)){
 				end=1;
+				break;
 			}
 			i=bot.ChooseEasyI(Q,1);
 			j=bot.ChooseEasyJ(Q,1);
 			
 			Q[i][j]=1;
 			play.placePiece(i,j,WHITE);
-			a+=play.flipLine(i,j,1,Q);
-			a+=play.flipColumn(i,j,1,Q);
-			a+=play.flipDiameter(i,j,1,Q);
+			play.flipLine(i,j,1,Q);
+			play.flipColumn(i,j,1,Q);
+			play.flipDiameter(i,j,1,Q);
             if(play.passTurn(Q,-1)==0){
                 temp2.resetTurn();
                 temp1.setTurn();
@@ -1206,6 +1218,7 @@ void playGame(Game play,int Q[9][9],User temp1,User temp2,vector<User> list,int 
                 system("cls");
                 cout << "BLACK has no moves!";
 				cout << endl << temp2.getUsername() << " turn:\n";
+				continue;
 			}
 		}
 
@@ -1244,12 +1257,15 @@ void playGame(Game play,int Q[9][9],User temp1,User temp2,vector<User> list,int 
 		        	case 32:{
 		        		int w;
 		        		if(Q[x][y]==0){
+							if(temp1.isTurn() && !play.isMoveValid(x,y,temp1.getColor(),Q)){
+								cout<< "move not valid!\n";
+							}
 		            		if(temp1.isTurn() && play.isMoveValid(x,y,temp1.getColor(),Q)){
 			                    play.placePiece(x, y, BLACK);
 			                    Q[x][y]=-1;
-			                    s1+=play.flipLine(x,y,-1,Q);
-			                    s1+=play.flipColumn(x,y,-1,Q);
-			                    s1+=play.flipDiameter(x,y,-1,Q);
+			                    play.flipLine(x,y,-1,Q);
+			                    play.flipColumn(x,y,-1,Q);
+			                    play.flipDiameter(x,y,-1,Q);
 			                    if(play.passTurn(Q,1)==0){
 				                    temp1.resetTurn();
 				                    temp2.setTurn();
@@ -1266,12 +1282,15 @@ void playGame(Game play,int Q[9][9],User temp1,User temp2,vector<User> list,int 
 									cout << endl<< temp1.getUsername() << " turn:\n";
 								}
 							}
-							 if(temp2.isTurn() && play.isMoveValid(x,y,temp2.getColor(),Q) && temp2.getUsername()!="Bot"){
+							if(temp2.isTurn() && !play.isMoveValid(x,y,temp2.getColor(),Q)){
+								cout<< "move not valid!\n";
+							}
+							if(temp2.isTurn() && play.isMoveValid(x,y,temp2.getColor(),Q) && temp2.getUsername()!="Bot"){
 								play.placePiece(x, y, WHITE);
 			                    Q[x][y]=1;
-			                    s2+=play.flipLine(x,y,1,Q);
-			                    s2+=play.flipColumn(x,y,1,Q);
-			                    s2+=play.flipDiameter(x,y,1,Q);
+			                    play.flipLine(x,y,1,Q);
+			                    play.flipColumn(x,y,1,Q);
+			                    play.flipDiameter(x,y,1,Q);
 			                    if(play.passTurn(Q,-1)==0){
 			                   		temp2.resetTurn();
 			                    	temp1.setTurn();
@@ -1288,7 +1307,6 @@ void playGame(Game play,int Q[9][9],User temp1,User temp2,vector<User> list,int 
 									break;
 								}
 							}
-		
 						}
 						break;
 					} 
@@ -1304,10 +1322,7 @@ void playGame(Game play,int Q[9][9],User temp1,User temp2,vector<User> list,int 
 					    play.updateHistory(Q,temp1,temp2,0,temp2.getUsername(),level);
 						}
 					    paused=1;
-						break;
-						
-		            case 27:
-		                closegraph();        
+						break;     
 		        }
 		        if (prevX != -1) {
 		            highlightCell(prevX, prevY, BLACK);
@@ -1323,11 +1338,9 @@ void playGame(Game play,int Q[9][9],User temp1,User temp2,vector<User> list,int 
 	} 
 }
 
-
-
 int main(){
 	User w;
-	int num,i,j,numb,t,s1=0,s2=0;
+	int num,i,j,numb,t;
 	string user;
 	vector <User> list;
 	list= fillUsers(list);
@@ -1337,19 +1350,19 @@ int main(){
     
     //game
 	while(true){
-	cout << endl << "Menu:\n" << "1- add player\n" << "2- enter game\n" << "3- review last game\n" << "4- best scores\n" << "5- exit\n";
-	cout << "enter option: ";
-	cin >> num;
-	int Q[9][9];
-	for(i=0;i<9;i++){
-		for(j=0;j<9;j++){
-			Q[i][j]=0;
+		cout << endl << "Menu:\n" << "1- add player\n" << "2- enter game\n" << "3- review last game\n" << "4- best scores\n" << "5- exit\n";
+		cout << "enter option: ";
+		cin >> num;
+		int Q[9][9];
+		for(i=0;i<9;i++){
+			for(j=0;j<9;j++){
+				Q[i][j]=0;
+			}
 		}
-	}
-	Q[3][3]=1;
-	Q[4][4]=1;
-	Q[3][4]=-1;
-	Q[4][3]=-1;
+		Q[3][3]=1;
+		Q[4][4]=1;
+		Q[3][4]=-1;
+		Q[4][3]=-1;
 		
 		//keys
 		if(num==1){
@@ -1400,11 +1413,17 @@ int main(){
 			
 			// user panel
 			else{
+				string p;
 				for(i=0;i<list.size();i++){
 					User temp1;
 					temp1=list[i];
 					if(user1==temp1.getUsername()){
-						if(getPassword()==temp1.getPass()){
+						p=getPassword();
+						while(p!=temp1.getPass()){
+						cout << "wrong password! try again...\n" << "enter password: ";
+						cin >> p;
+						}
+						if(p==temp1.getPass()){
 							system("cls");
 							cout << "welcome user (" << temp1.getUsername() << ")" << endl << "1- single player\n2- two players\nchoose option: ";
 							cin >> numb;
@@ -1506,7 +1525,12 @@ int main(){
 								for(i=0;i<list.size();i++){
 									User temp2=list[i];
 									if(user2==temp2.getUsername()){
-										if(temp2.getPass()==getPassword()){
+										p=getPassword();
+										while(p!=temp2.getPass()){
+										cout << "wrong password! try again...\n" << "enter password: ";
+										cin >> p;
+										}
+										if(temp2.getPass()==p){
 											system("cls");
 											cout << "second player confirmed!\n" << "player 1: " << temp1.getUsername() << endl << "player 2: " << temp2.getUsername()<< endl;
 											cout << "-------------------\n";
@@ -1626,7 +1650,10 @@ int main(){
 				}
 			}
 			cout << "Best scores:\n"; 
-			showVec(t);	
+			for(i=0;i<t.size();i++){
+				temp=t[i];
+				cout << temp.getUsername() << " " << temp.getBestScore() << endl;
+			}
 			cout << "---------------------";
 
 		}
