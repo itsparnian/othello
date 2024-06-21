@@ -6,30 +6,20 @@
 #include <conio.h>
 #define CELL_SIZE 100 
 #define BOARD_SIZE 8
+
 using namespace std;
 
-void showGame(int q[9][9]){
-	int i,j;
-	for(j=0;j<8;j++){
-		for(i=0;i<8;i++){
-			cout << q[i][j];
-		}
-		cout << endl;
-	}
-	cout << "********" << endl;
-}
-string getUsername(){
-	string username;
-	cout << "enter username: ";
-	cin >> username;
-	return username;
-}
-string getPassword(){
-	string password;
-	cout << "enter password: ";
-	cin >> password;
-	return password;
-}
+class User;
+class Admin;
+class Bot;
+class Game;
+string getUsername();
+string getPassword();
+void highlightCell(int x, int y, int color);
+vector<User> fillUsers(vector<User> a);
+void fillFile(vector<User> a);
+void showVec(vector <User> b);
+void playGame(Game play,int Q[9][9],User temp1,User temp2,vector<User> list,int stat,string level);
 
 //classes
 class User{
@@ -63,7 +53,7 @@ public:
 		cout << "please enter your username: ";
 		cin >> username;
 		
-		while(username=="Bot"){
+		while(username=="Bot" || username=="Admin"){
 			cout << "invalid username!" << endl << "enter username: ";
 			cin >> username;		
 		}
@@ -116,8 +106,9 @@ public:
 		return 0;
 	}
 	int isTurn(){
-		return this->Turn;
+		return Turn;
 	}
+	
 	//getter
 	int getID(){
 		return ID;
@@ -137,6 +128,7 @@ public:
 	int getColor(){
 		return Color;
 	}
+	
 	//setter
 	virtual void setData(){
 	}
@@ -191,6 +183,7 @@ public:
 		setData();
 	}
 };
+
 class Game{
 public:
 	Game(){
@@ -389,7 +382,7 @@ public:
 		return countA+countB;
 	}
 	void flipDiameter(int x,int y,int color,int q[9][9]){
-		int i,j,countB=0,countA=0,countBB=0,countAA=0,index=-1;
+		int i,j,index=-1;
 		for(i=1;i<8;i++){
 			if(x+i>=8 || y-i<0 || q[x+i][y-i]==0){
 				break;
@@ -401,7 +394,6 @@ public:
 		}
 		if(index!=-1){
 			for(i=1;i<index;i++){
-					countB++;
 					if(color==1){
 						q[x+i][y-i]=1;
 						placePiece(x+i,y-i,WHITE);
@@ -425,7 +417,6 @@ public:
 		}
 		if(index!=-1){
 			for(i=1;i<index;i++){
-					countA++;
 					if(color==1){
 						q[x-i][y+i]=1;
 						placePiece(x-i,y+i,WHITE);
@@ -450,7 +441,7 @@ public:
 		}
 		if(index!=-1){
 			for(i=1;i<index;i++){
-					countBB++;
+				
 					if(color==1){
 						q[x-i][y-i]=1;
 						placePiece(x-i,y-i,WHITE);
@@ -475,7 +466,7 @@ public:
 		}
 		if(index!=-1){
 			for(i=1;i<index;i++){
-					countAA++;
+			
 					if(color==1){
 						q[x+i][y+i]=1;
 						placePiece(x+i,y+i,WHITE);
@@ -557,14 +548,6 @@ public:
 		return countA+countB+countAA+countBB;
 	}
 	
-//	User checkTurn(User a,User b){
-//		if(a.isTurn()){
-//			return a;
-//		}
-//		else if(b.isTurn()){
-//			return b;
-//		}
-//	}
 	int isMoveValid(int x,int y,int color, int q[9][9]){
 		int count=0;
 		count+=checkLine(x,y,color,q);
@@ -584,11 +567,9 @@ public:
 					count+=a;
 					count+=b;
 					count+=c;
-					//cout << a << b << c;
 				}
 			}
 		}
-//		cout << count;
 		if(count==0){
 			return 1;
 		}
@@ -843,9 +824,9 @@ public:
 		hist.close();
 		return color;
 	}
-	void showLastGame(int q[9][9]){
+	int showLastGame(int q[9][9]){
 		string first,sec,temp,stat;
-		int i=0,j=0,s1,s2,score1,score2;
+		int i=0,j=0,s1,s2,score1,score2,count=0;
 		char a;
 		fstream hist;
 		hist.open("history.txt", ios::in);
@@ -858,6 +839,7 @@ public:
 			getline(hist,temp);
 			
 			if(stat=="finished"){
+				count++;
 				score1=s1;
 				score2=s2;
 				for(j=0;j<8;j++){
@@ -888,6 +870,11 @@ public:
 			}
 		}
 		hist.close();
+		if(count==0){
+			cout << "you Haven't finished any games yet!\n";
+			return 0;
+		}
+		else{
 		cout << first << " vs " << sec << endl;
 		cout << "scores:" << endl << first << ": " << score1 << endl << sec << ": " << score2 << endl;
 		if(score1>score2){
@@ -901,6 +888,8 @@ public:
 			cout << "draw!\n";
 		}
 		setBoard(q);
+		return 1;	
+		}
 	}
 };
 
@@ -914,55 +903,50 @@ public:
 		setData();
 	}
 	int ChooseHardI(int q[9][9],int color){
-		int max=0,i,j,a,indexI,indexJ,dif=0;
+		int max=0,i,j,a,indexI,dif=0;
 		Game botG;
 		for(j=0;j<8;j++){
 			for(i=0;i<8;i++){
 				a=0;
-				
 				if(q[i][j]==0 && botG.isMoveValid(i,j,color,q)){
+					if((i==0 && j==0) || (i==7&&j==0) || (i==0&&j==7) || (i==7&&j==7)){
+						return i;
+					}
 					a+=botG.checkColumn(i,j,color,q);
 					a+=botG.checkDiameter(i,j,color,q);
 					a+=botG.checkLine(i,j,color,q);
 				}
-				if(a>max && (i-j>=dif || j-i>=dif)){
+				if(a>max){
 					max=a;
 					indexI=i;
-					indexJ=j;
-					if(i<j)
-					dif=j-i;
-					else
-					dif=i-j;
 				}
-			}
+			}	
 		}
 		return indexI;
 	}
 	int ChooseHardJ(int q[9][9],int color){
-		int max=0,i,j,a,indexI,indexJ,dif=0;
+		int max=0,i,j,a,indexJ,indexI,dif=0;
 		Game botG;
 		for(j=0;j<8;j++){
 			for(i=0;i<8;i++){
 				a=0;
 				if(q[i][j]==0 && botG.isMoveValid(i,j,color,q)){
+					if((i==0 && j==0) || (i==7&&j==0) || (i==0&&j==7) || (i==7&&j==7)){
+						return j;
+					}
 					a+=botG.checkColumn(i,j,color,q);
 					a+=botG.checkDiameter(i,j,color,q);
 					a+=botG.checkLine(i,j,color,q);
 				}
-				if(a>max && (i-j>=dif || j-i>=dif)){
+				if(a>max){
 					max=a;
-					indexI=i;
 					indexJ=j;
-					if(i<j)
-					dif=j-i;
-					else
-					dif=i-j;
 				}
-			}
+			}	
 		}
 		return indexJ;
 	}
-	int ChooseMediumI(int q[9][9],int color){
+	int ChooseNormalI(int q[9][9],int color){
 		int max=0,i,j,a,indexI,indexJ,dif=0;
 		Game botG;
 		for(j=0;j<8;j++){
@@ -983,7 +967,7 @@ public:
 		}
 		return indexI;
 	}
-	int ChooseMediumJ(int q[9][9],int color){
+	int ChooseNormalJ(int q[9][9],int color){
 		int max=0,i,j,a,indexI,indexJ,dif=0;
 		Game botG;
 		for(j=0;j<8;j++){
@@ -1005,7 +989,7 @@ public:
 		return indexJ;
 	}
 	int ChooseEasyI(int q[9][9],int color){
-		int max=0,i,j,a,indexI;
+		int min=64,i,j,a,indexI;
 		Game botG;
 		for(j=0;j<8;j++){
 			for(i=0;i<8;i++){
@@ -1014,17 +998,17 @@ public:
 					a+=botG.checkColumn(i,j,color,q);
 					a+=botG.checkDiameter(i,j,color,q);
 					a+=botG.checkLine(i,j,color,q);
-					if(a>0){
+					if(a>0 && a<min){
+					min=a;
 					indexI=i;
-					return indexI;
 					}
 				}
 			}
 		}
-		return -1;
+		return indexI;
 	}
 	int ChooseEasyJ(int q[9][9],int color){
-		int max=0,i,j,a,indexJ;
+		int min=64,i,j,a,indexJ;
 		Game botG;
 		for(j=0;j<8;j++){
 			for(i=0;i<8;i++){
@@ -1033,18 +1017,30 @@ public:
 					a+=botG.checkColumn(i,j,color,q);
 					a+=botG.checkDiameter(i,j,color,q);
 					a+=botG.checkLine(i,j,color,q);
-					if(a>0){
+					if(a>0 && a<min){
+					min=a;
 					indexJ=j;
-					return indexJ;
 					}
 				}
 			}
 		}
-		return -1;
+		return indexJ;
 	}
 };
 
 //functions
+string getUsername(){
+	string username;
+	cout << "enter username: ";
+	cin >> username;
+	return username;
+}
+string getPassword(){
+	string password;
+	cout << "enter password: ";
+	cin >> password;
+	return password;
+}
 void highlightCell(int x, int y, int color) {
     setcolor(color);
     rectangle(x * CELL_SIZE + 1, y * CELL_SIZE + 1, x * CELL_SIZE + CELL_SIZE - 1, y * CELL_SIZE + CELL_SIZE - 1);
@@ -1173,8 +1169,8 @@ void playGame(Game play,int Q[9][9],User temp1,User temp2,vector<User> list,int 
 				end=1;
 				break;
 			}
-			i=bot.ChooseMediumI(Q,1);
-			j=bot.ChooseMediumJ(Q,1);
+			i=bot.ChooseNormalI(Q,1);
+			j=bot.ChooseNormalJ(Q,1);
 			Q[i][j]=1;
 			play.placePiece(i,j,WHITE);
 			play.flipLine(i,j,1,Q);
@@ -1340,7 +1336,7 @@ void playGame(Game play,int Q[9][9],User temp1,User temp2,vector<User> list,int 
 
 int main(){
 	User w;
-	int num,i,j,numb,t;
+	int num,i,j,numb,t,count,count2;
 	string user;
 	vector <User> list;
 	list= fillUsers(list);
@@ -1385,8 +1381,15 @@ int main(){
 			//admin panel
 			if(user1==a.getUsername()){
 				if(getPassword()==a.getPass()){
-					cout << "Welcome Admin!" << endl << "choose option: " << endl << "1- delete user" << endl;
+					cout << "Welcome Admin!" << endl << "choose option: " << endl << "1- delete user" << endl << "2- go back to menu\n";
 					cin >> numb;
+					while(numb!=1 && numb!=2){
+						cout << "invalid input!\n try again: ";
+						cin >> numb;
+					}
+					if(numb==2){
+						continue;
+					}
 					if(numb==1){
 						//delete user
 						cout << "you are deleting a user!";
@@ -1414,10 +1417,12 @@ int main(){
 			// user panel
 			else{
 				string p;
+				count=0;
 				for(i=0;i<list.size();i++){
 					User temp1;
 					temp1=list[i];
 					if(user1==temp1.getUsername()){
+						count++;
 						p=getPassword();
 						while(p!=temp1.getPass()){
 						cout << "wrong password! try again...\n" << "enter password: ";
@@ -1522,9 +1527,15 @@ int main(){
 								cout << "2 player game\n" << "player 2 information:\n";	
 								Game play;
 								string user2=getUsername();
+								while(user2==user1){
+									cout << "2 players can't be the same! try again...\n";
+									user2=getUsername();
+								}
 								for(i=0;i<list.size();i++){
+									count2=0;
 									User temp2=list[i];
 									if(user2==temp2.getUsername()){
+										count2++;
 										p=getPassword();
 										while(p!=temp2.getPass()){
 										cout << "wrong password! try again...\n" << "enter password: ";
@@ -1612,9 +1623,17 @@ int main(){
 										}
 									}
 								}
+								if(count2==0){
+								cout << "please sign up first!\n";
+								continue;
+								}	
 							}
 						}
 					}
+				}
+				if(count==0){
+					cout << "please sign up first!\n";
+					continue;
 				}
 			}
 		}
@@ -1622,10 +1641,14 @@ int main(){
 			system("cls");
 			cout << "review last game:\n";
 			Game play;
-			play.showLastGame(Q);
+			if(play.showLastGame(Q)){
 			cout << "press any key to go back to menu...";
 			getch();
-			closegraph();
+			closegraph();		
+			}
+			else{
+				sleep(2);
+			}
 		}
 		if(num==4){
 			system("cls");
@@ -1635,6 +1658,11 @@ int main(){
 			string name;
 			list.clear();
 			list= fillUsers(list);
+			if(list.size()==0){
+				cout << "No users added!\n";
+				sleep(2);
+			}
+			else{
 			t=list;
 			for(i=0;i<t.size()-1;i++){
 				for(j=i+1;j<t.size();j++){
@@ -1654,8 +1682,8 @@ int main(){
 				temp=t[i];
 				cout << temp.getUsername() << " " << temp.getBestScore() << endl;
 			}
-			cout << "---------------------";
-
+			cout << "---------------------";		
+			}
 		}
 		if(num==5){
 			break;
